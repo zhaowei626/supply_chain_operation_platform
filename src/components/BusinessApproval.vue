@@ -683,7 +683,7 @@ onBeforeUnmount(() => {
           
           <div class="modal-footer" v-if="modalMode === 'approve'" style="padding: 16px 24px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 12px; background: #fff; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">
             <button class="btn btn--ghost" style="color: #ff4d4f; border-color: #ff4d4f; background: #fff;" @click="handleReject">驳回</button>
-            <button class="btn btn--primary" @click="handlePass">通过</button>
+            <button class="btn btn--primary" @click="handlePass">审批通过</button>
           </div>
         </div>
       </div>
