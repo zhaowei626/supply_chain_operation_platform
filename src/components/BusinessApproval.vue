@@ -253,12 +253,46 @@ function toggleAllSelection(event) {
   }
 }
 
+const batchApproveConfirmVisible = ref(false)
+const batchApproveMessage = ref('')
+
+const batchRejectPromptVisible = ref(false)
+const batchRejectMessage = ref('')
+const batchRejectReason = ref('')
+
 function handleBatchApprove() {
   if (selectedRows.value.length === 0) {
     alert('请先选择要审批的数据')
     return
   }
-  alert(`批量审批了 ${selectedRows.value.length} 条数据: ${selectedRows.value.join(', ')}`)
+  batchApproveMessage.value = `${selectedRows.value.join('、')}，上述申请单确认审批通过吗？`
+  batchApproveConfirmVisible.value = true
+}
+
+function confirmBatchApprove() {
+  alert('批量审批操作成功')
+  batchApproveConfirmVisible.value = false
+  selectedRows.value = []
+}
+
+function handleBatchReject() {
+  if (selectedRows.value.length === 0) {
+    alert('请先选择要驳回的数据')
+    return
+  }
+  batchRejectMessage.value = `已选定${selectedRows.value.join('、')}申请单`
+  batchRejectReason.value = ''
+  batchRejectPromptVisible.value = true
+}
+
+function confirmBatchReject() {
+  if (!batchRejectReason.value.trim()) {
+    alert('请输入驳回原因')
+    return
+  }
+  alert(`批量驳回操作成功，原因：${batchRejectReason.value}`)
+  batchRejectPromptVisible.value = false
+  selectedRows.value = []
 }
 
 function handleExport() {
@@ -442,7 +476,11 @@ onBeforeUnmount(() => {
         <div class="toolbar">
           <button class="btn btn--ghost" type="button" @click="handleBatchApprove">
             <span class="btn__icon">✓</span>
-            批量审核
+            批量审批通过
+          </button>
+          <button class="btn btn--ghost" type="button" @click="handleBatchReject">
+            <span class="btn__icon">✗</span>
+            批量驳回
           </button>
           <button class="btn btn--ghost" type="button" @click="handleExport">
             <span class="btn__icon">↓</span>
@@ -684,6 +722,48 @@ onBeforeUnmount(() => {
           <div class="modal-footer" v-if="modalMode === 'approve'" style="padding: 16px 24px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 12px; background: #fff; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">
             <button class="btn btn--ghost" style="color: #ff4d4f; border-color: #ff4d4f; background: #fff;" @click="handleReject">驳回</button>
             <button class="btn btn--primary" @click="handlePass">审批通过</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 批量审批通过二次确认框 -->
+      <div v-if="batchApproveConfirmVisible" class="modal-overlay" style="z-index: 1100; display: flex; align-items: center; justify-content: center;" @click.self="batchApproveConfirmVisible = false">
+        <div class="modal-dialog" style="width: 480px; max-width: 90vw; border-radius: 12px; overflow: hidden; margin: 0;">
+          <div class="modal-header" style="padding: 16px 24px; border-bottom: 1px solid var(--line);">
+            <h3 class="modal-title" style="font-size: 16px; margin: 0;">批量审批通过确认</h3>
+            <button class="icon-button icon-button--ghost" style="width: 28px; height: 28px; border-radius: 6px;" @click="batchApproveConfirmVisible = false">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          <div class="modal-body" style="padding: 24px; font-size: 14px; line-height: 1.5;">
+            {{ batchApproveMessage }}
+          </div>
+          <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 12px; background: #fff;">
+            <button class="btn btn--ghost" @click="batchApproveConfirmVisible = false">取消</button>
+            <button class="btn btn--primary" @click="confirmBatchApprove">确认</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 批量驳回原因输入框 -->
+      <div v-if="batchRejectPromptVisible" class="modal-overlay" style="z-index: 1100; display: flex; align-items: center; justify-content: center;" @click.self="batchRejectPromptVisible = false">
+        <div class="modal-dialog" style="width: 520px; max-width: 90vw; border-radius: 12px; overflow: hidden; margin: 0;">
+          <div class="modal-header" style="padding: 16px 24px; border-bottom: 1px solid var(--line);">
+            <h3 class="modal-title" style="font-size: 16px; margin: 0;">批量驳回申请</h3>
+            <button class="icon-button icon-button--ghost" style="width: 28px; height: 28px; border-radius: 6px;" @click="batchRejectPromptVisible = false">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          <div class="modal-body" style="padding: 24px;">
+            <div style="margin-bottom: 16px; font-size: 14px; color: var(--text-secondary); background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid var(--line); word-break: break-all; line-height: 1.5;">
+              {{ batchRejectMessage }}
+            </div>
+            <div style="margin-bottom: 8px; font-size: 14px;"><span style="color: #ff4d4f; margin-right: 4px;">*</span>驳回原因</div>
+            <textarea v-model="batchRejectReason" rows="4" placeholder="请输入驳回原因..." style="width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 6px; resize: vertical; font-family: inherit; font-size: 14px; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--line)'"></textarea>
+          </div>
+          <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 12px; background: #fff;">
+            <button class="btn btn--ghost" @click="batchRejectPromptVisible = false">取消</button>
+            <button class="btn btn--primary" style="background: #ff4d4f; border-color: #ff4d4f;" @click="confirmBatchReject">确认驳回</button>
           </div>
         </div>
       </div>
