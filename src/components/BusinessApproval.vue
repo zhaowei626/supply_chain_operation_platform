@@ -605,9 +605,9 @@ onBeforeUnmount(() => {
                   <div class="detail-field"><span class="detail-field__label">申请人联系方式</span><span class="detail-field__value">{{ currentDetail.applicantPhone }}</span></div>
                   <div class="detail-field"><span class="detail-field__label">所属公司/部门</span><span class="detail-field__value">{{ currentDetail.companyDept }}</span></div>
                   <div class="detail-field"><span class="detail-field__label">申请时间</span><span class="detail-field__value">{{ currentDetail.applyTime }}</span></div>
-                  <div class="detail-field"><span class="detail-field__label">原材料站全称</span><span class="detail-field__value">{{ currentDetail.stationName }}</span></div>
-                  <div class="detail-field"><span class="detail-field__label">原材料站编码</span><span class="detail-field__value">{{ currentDetail.stationCode }}</span></div>
-                  <div class="detail-field" style="grid-column: span 2;"><span class="detail-field__label">原材料站地址</span><span class="detail-field__value">{{ currentDetail.stationAddress }}</span></div>
+                  <div class="detail-field"><span class="detail-field__label">材料站全称</span><span class="detail-field__value">{{ currentDetail.stationName }}</span></div>
+                  <div class="detail-field"><span class="detail-field__label">材料站编码</span><span class="detail-field__value">{{ currentDetail.stationCode }}</span></div>
+                  <div class="detail-field" style="grid-column: span 2;"><span class="detail-field__label">材料站地址</span><span class="detail-field__value">{{ currentDetail.stationAddress }}</span></div>
                   
                   <template v-if="currentDetail.type !== '现场退料'">
                     <template v-if="currentDetail.type === '转材料站'">
