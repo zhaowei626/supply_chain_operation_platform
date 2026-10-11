@@ -1124,6 +1124,7 @@ function sortIndicator(key) {
 
           <div class="table-footer">
             <div class="page-size">
+              <span style="margin-right: 8px;">共 {{ filteredRows.length }} 条</span>
               每页
               <select v-model.number="pageSize" @change="gotoPage(1)">
                 <option :value="8">8 条</option>

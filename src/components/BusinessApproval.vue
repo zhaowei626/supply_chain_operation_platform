@@ -557,6 +557,7 @@ onBeforeUnmount(() => {
       </div>
       <div class="table-footer">
         <div class="page-size">
+          <span style="margin-right: 8px;">共 {{ filteredRows.length }} 条</span>
           每页
           <select v-model.number="pageSize" @change="gotoPage(1)">
             <option :value="10">10 条</option>
@@ -669,6 +670,7 @@ onBeforeUnmount(() => {
                 </div>
                 <div class="table-footer" style="padding-top: 12px; border-top: none;">
                   <div class="page-size">
+                    <span style="margin-right: 8px;">共 {{ currentDetail.materialList.length }} 条</span>
                     每页
                     <select v-model.number="detailPageSize" @change="gotoDetailPage(1)">
                       <option :value="5">5 条</option>
