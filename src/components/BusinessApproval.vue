@@ -9,7 +9,7 @@ const tableColumns = [
   { key: 'index', label: '序号', width: '60px', sortable: false },
   { key: 'code', label: '申请单号', width: '160px', sortable: true },
   { key: 'type', label: '申请类型', width: '130px', sortable: true },
-  { key: 'project', label: '关联项目', width: '180px', sortable: true },
+  { key: 'stationName', label: '材料站全称', width: '180px', sortable: true },
   { key: 'applicant', label: '申请人', width: '100px', sortable: true },
   { key: 'applicantPhone', label: '申请人联系方式', width: '140px', sortable: true },
   { key: 'companyDept', label: '所属公司/部门', width: '160px', sortable: true },
@@ -19,12 +19,12 @@ const tableColumns = [
 ]
 
 const approvalRows = [
-  { code: 'ZCLZ20260928001', type: '转材料站', project: '沈阳500kV盛京变电站扩建工程', applicant: '刘海', applicantPhone: '138-1234-5678', companyDept: '国网沈阳供电公司 / 物资部', applyTime: '2026-09-28 10:00', status: '待审批' },
-  { code: 'XCTL20260927001', type: '现场退料', project: '大连220kV南部电网网架完善工程', applicant: '陈敏', applicantPhone: '139-8765-4321', companyDept: '国网大连供电公司 / 运检部', applyTime: '2026-09-27 15:30', status: '已通过' },
-  { code: 'ZCLZ20260927001', type: '转材料站', project: '鞍山10kV农网改造升级项目', applicant: '周立', applicantPhone: '137-5555-6666', companyDept: '国网鞍山供电公司 / 营销部', applyTime: '2026-09-27 09:15', status: '已驳回' },
-  { code: 'XCHY20260926001', type: '现场耗用', project: '抚顺66kV城东变电站新建工程', applicant: '韩雪', applicantPhone: '158-9999-8888', companyDept: '国网抚顺供电公司 / 财务部', applyTime: '2026-09-26 14:20', status: '待审批' },
-  { code: 'ZCLZ20260926001', type: '转材料站', project: '本溪500kV徐家变电站改造工程', applicant: '王强', applicantPhone: '186-1111-2222', companyDept: '国网本溪供电公司 / 发建部', applyTime: '2026-09-26 11:10', status: '已通过' },
-  { code: 'XCTL20260925001', type: '现场退料', project: '锦州220kV松山输电线路工程', applicant: '李珂', applicantPhone: '189-3333-4444', companyDept: '国网锦州供电公司 / 物资部', applyTime: '2026-09-25 16:45', status: '待审批' },
+  { id: 0, code: 'ZCLZ20260928001', type: '转材料站', stationName: '国网沈阳供电公司铁西物资供应中心', project: '沈阳500kV盛京变电站扩建工程', applicant: '刘海', applicantPhone: '138-1234-5678', companyDept: '国网沈阳供电公司 / 物资部', applyTime: '2026-09-28 10:00', status: '待审批' },
+  { id: 1, code: 'XCTL20260927001', type: '现场退料', stationName: '国网大连供电公司甘井子物资供应中心', project: '大连220kV南部电网网架完善工程', applicant: '陈敏', applicantPhone: '139-8765-4321', companyDept: '国网大连供电公司 / 运检部', applyTime: '2026-09-27 15:30', status: '已通过' },
+  { id: 2, code: 'ZCLZ20260927001', type: '转材料站', stationName: '国网鞍山供电公司铁东物资周转站', project: '鞍山10kV农网改造升级项目', applicant: '周立', applicantPhone: '137-5555-6666', companyDept: '国网鞍山供电公司 / 营销部', applyTime: '2026-09-27 09:15', status: '已驳回' },
+  { id: 3, code: 'XCHY20260926001', type: '现场耗用', stationName: '国网抚顺供电公司顺城物资储备库', project: '抚顺66kV城东变电站新建工程', applicant: '韩雪', applicantPhone: '158-9999-8888', companyDept: '国网抚顺供电公司 / 财务部', applyTime: '2026-09-26 14:20', status: '待审批' },
+  { id: 4, code: 'ZCLZ20260926001', type: '转材料站', stationName: '国网本溪供电公司明山材料站', project: '本溪500kV徐家变电站改造工程', applicant: '王强', applicantPhone: '186-1111-2222', companyDept: '国网本溪供电公司 / 发建部', applyTime: '2026-09-26 11:10', status: '已通过' },
+  { id: 5, code: 'XCTL20260925001', type: '现场退料', stationName: '国网锦州供电公司凌河物资供应站', project: '锦州220kV松山输电线路工程', applicant: '李珂', applicantPhone: '189-3333-4444', companyDept: '国网锦州供电公司 / 物资部', applyTime: '2026-09-25 16:45', status: '待审批' },
 ]
 
 const createEmptyForm = () => ({
@@ -327,7 +327,7 @@ const filteredRows = computed(() => {
 
     return (
       textMatch(row.code, filters.code) &&
-      textMatch(row.project, filters.project) &&
+      textMatch(row.stationName, filters.project) &&
       textMatch(row.applicant, filters.applicant) &&
       (!filters.type || row.type === filters.type) &&
       (!filters.status || row.status === filters.status) &&
@@ -432,8 +432,8 @@ onBeforeUnmount(() => {
           </select>
         </label>
         <label class="field">
-          <span>关联项目</span>
-          <input v-model.trim="form.project" type="text" placeholder="请输入关联项目" />
+          <span>材料站全称</span>
+          <input v-model.trim="form.project" type="text" placeholder="请输入材料站全称" />
         </label>
         <label class="field">
           <span>申请人</span>
@@ -528,7 +528,7 @@ onBeforeUnmount(() => {
               <td class="cell--index">{{ startIndex + index + 1 }}</td>
               <td>{{ row.code }}</td>
               <td><span class="chip chip--soft">{{ row.type }}</span></td>
-              <td :title="row.project">{{ formatTextTruncate(row.project) }}</td>
+              <td :title="row.stationName">{{ formatTextTruncate(row.stationName) }}</td>
               <td>{{ row.applicant }}</td>
               <td>{{ row.applicantPhone }}</td>
               <td :title="row.companyDept">{{ formatTextTruncate(row.companyDept) }}</td>

@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import BusinessApproval from './components/BusinessApproval.vue'
+import MaterialStationApproval from './components/MaterialStationApproval.vue'
 
 const menuGroups = reactive([
   {
@@ -1162,6 +1163,7 @@ function sortIndicator(key) {
         </section>
         </div>
         <BusinessApproval v-if="activeTabId === 'business-approval'" />
+        <MaterialStationApproval v-if="activeTabId === 'material-approval'" />
       </main>
     </div>
 
