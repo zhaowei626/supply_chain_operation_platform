@@ -46,6 +46,11 @@ const sortState = ref({ key: 'applyTime', direction: 'desc' })
 const loading = ref(true)
 const selectedRows = ref([])
 
+// Detail Modal State
+const detailModalVisible = ref(false)
+const activeDetailTab = ref('info')
+const currentDetail = ref(null)
+
 const batchApproveConfirmVisible = ref(false)
 const batchApproveMessage = ref('')
 
@@ -220,7 +225,64 @@ function handleAudit(row) {
 }
 
 function handleDetail(row) {
-  alert('详情：' + row.fullName)
+  const generateTimeline = (row) => {
+    const timeline = []
+    let currentId = 1
+    const time1 = row.applyTime
+    const time2 = '2026-10-10 14:30'
+    const time3 = '2026-10-11 09:00'
+
+    timeline.push({ id: currentId++, nodeName: '提交申请', operator: row.applicant, time: time1, result: '提交成功', comment: '' })
+    
+    if (row.status !== '待审批') {
+      timeline.push({ 
+        id: currentId++, 
+        nodeName: '领导审批', 
+        operator: '张建国', 
+        time: time2, 
+        result: row.status, 
+        comment: row.status === '已驳回' ? '申请材料不齐全，缺少地理位置照片。' : '信息核实无误，准予通过。' 
+      })
+    }
+    
+    return timeline.reverse()
+  }
+
+  const mockAssociatedProjects = [
+    { id: 1, name: '沈阳500kV盛京变电站扩建工程', code: 'PRJ2026001', manager: '张三' },
+    { id: 2, name: '大连220kV南部电网网架完善工程', code: 'PRJ2026002', manager: '李四' },
+    { id: 3, name: '鞍山10kV农网改造升级项目', code: 'PRJ2026003', manager: '王五' },
+    { id: 4, name: '辽阳西门子工业园配电网接入工程', code: 'PRJ2026004', manager: '赵六' },
+    { id: 5, name: '营口自贸区智能化变电站新建项目', code: 'PRJ2026005', manager: '孙七' }
+  ]
+
+  currentDetail.value = {
+    ...row,
+    primaryUnit: '国家电网有限公司',
+    secondaryUnit: '国网辽宁省电力有限公司',
+    tertiaryDept: '物资部 / 仓储中心',
+    professionalField: '电网建设',
+    nature: '项目现场',
+    provinceCityCounty: '辽宁省 / 沈阳市 / 铁西区',
+    coordinates: '123.364521, 41.798542',
+    address: '辽宁省沈阳市铁西区北二中路18号物资周转仓库',
+    locationInfo: '北二中路与重工街交汇处向东200米，靠近物流园南门',
+    registrant: row.applicant,
+    registrantPhone: row.applicantPhone,
+    registrationTime: row.applyTime,
+    stationStatus: row.status === '已通过' ? '启用' : (row.status === '已驳回' ? '停用' : '-'),
+    associatedProjects: mockAssociatedProjects,
+    photos: ['照片1', '照片2', '照片3'],
+    remarks: '该材料站主要用于存放盛京变电站扩建工程所需的电缆及绝缘子。',
+    timeline: generateTimeline(row)
+  }
+  activeDetailTab.value = 'info'
+  detailModalVisible.value = true
+}
+
+function closeDetail() {
+  detailModalVisible.value = false
+  currentDetail.value = null
 }
 
 onMounted(() => {
@@ -447,6 +509,124 @@ onBeforeUnmount(() => {
           <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 12px; background: #fff;">
             <button class="btn btn--ghost" @click="batchRejectPromptVisible = false">取消</button>
             <button class="btn btn--primary" style="background: #ff4d4f; border-color: #ff4d4f;" @click="confirmBatchReject">确认驳回</button>
+          </div>
+        </div>
+      </div>
+    </teleport>
+
+    <!-- 材料站审批详情弹窗 -->
+    <teleport to="body">
+      <div v-if="detailModalVisible" class="modal-overlay" @click.self="closeDetail">
+        <div class="modal-dialog">
+          <div class="modal-header">
+            <h2 class="modal-title">材料站审批详情 - {{ currentDetail?.type }} - {{ currentDetail?.code }}</h2>
+            <button class="icon-button icon-button--ghost" style="width: 32px; height: 32px; border-radius: 8px;" @click="closeDetail">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          <div class="modal-tabs">
+            <div class="modal-tab" :class="{'modal-tab--active': activeDetailTab === 'info'}" @click="activeDetailTab = 'info'">基础信息</div>
+            <div class="modal-tab" :class="{'modal-tab--active': activeDetailTab === 'approval'}" @click="activeDetailTab = 'approval'">
+              审核信息
+              <span v-if="currentDetail" class="chip" :class="`chip--${statusTone(currentDetail.status)}`" style="margin-left: 8px; transform: scale(0.85);">{{ currentDetail.status }}</span>
+            </div>
+          </div>
+          <div class="modal-body">
+            <!-- 基础信息 Tab -->
+            <div v-if="activeDetailTab === 'info'" class="modal-content">
+              <div class="detail-card">
+                <div class="detail-grid">
+                  <!-- 材料站注册字段 -->
+                  <template v-if="currentDetail.type === '材料站注册'">
+                    <div class="detail-field"><span class="detail-field__label">一级单位</span><span class="detail-field__value">{{ currentDetail.primaryUnit }}</span></div>
+                    <div class="detail-field"><span class="detail-field__label">二级单位/部门</span><span class="detail-field__value">{{ currentDetail.secondaryUnit }}</span></div>
+                    <div class="detail-field"><span class="detail-field__label">三级部门</span><span class="detail-field__value">{{ currentDetail.tertiaryDept }}</span></div>
+                    <div class="detail-field"><span class="detail-field__label">所属专业</span><span class="detail-field__value">{{ currentDetail.professionalField }}</span></div>
+                    <div class="detail-field"><span class="detail-field__label">材料站性质</span><span class="detail-field__value">{{ currentDetail.nature }}</span></div>
+                    <div class="detail-field"><span class="detail-field__label">材料站全称</span><span class="detail-field__value">{{ currentDetail.fullName }}</span></div>
+                    <div class="detail-field"><span class="detail-field__label">省/市/县(区)</span><span class="detail-field__value">{{ currentDetail.provinceCityCounty }}</span></div>
+                    <div class="detail-field"><span class="detail-field__label">经纬度</span><span class="detail-field__value">{{ currentDetail.coordinates }}</span></div>
+                    <div class="detail-field" style="grid-column: span 2;"><span class="detail-field__label">材料站地址</span><span class="detail-field__value">{{ currentDetail.address }}</span></div>
+                    <div class="detail-field" style="grid-column: span 2;"><span class="detail-field__label">位置信息</span><span class="detail-field__value">{{ currentDetail.locationInfo }}</span></div>
+                    <div class="detail-field"><span class="detail-field__label">注册人</span><span class="detail-field__value">{{ currentDetail.registrant }}</span></div>
+                    <div class="detail-field"><span class="detail-field__label">注册人联系方式</span><span class="detail-field__value">{{ currentDetail.registrantPhone }}</span></div>
+                    <div class="detail-field"><span class="detail-field__label">注册时间</span><span class="detail-field__value">{{ currentDetail.registrationTime }}</span></div>
+                    <div class="detail-field"><span class="detail-field__label">材料站状态</span><span class="detail-field__value">{{ currentDetail.stationStatus }}</span></div>
+                    
+                    <div class="detail-field" style="grid-column: span 4;">
+                      <span class="detail-field__label">关联项目</span>
+                      <div class="table-wrap" style="margin-top: 8px; border: 1px solid var(--line); border-radius: 8px; max-height: 200px; overflow-y: auto;">
+                        <table class="data-table" style="min-width: 100%; table-layout: fixed;">
+                          <thead>
+                            <tr>
+                              <th style="width: 50px;">序号</th>
+                              <th>项目名称</th>
+                              <th style="width: 120px;">项目编码</th>
+                              <th style="width: 100px;">项目经理</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr v-for="(prj, idx) in currentDetail.associatedProjects" :key="prj.id">
+                              <td class="cell--index">{{ idx + 1 }}</td>
+                              <td :title="prj.name">{{ formatTextTruncate(prj.name, 15) }}</td>
+                              <td>{{ prj.code }}</td>
+                              <td>{{ prj.manager }}</td>
+                            </tr>
+                            <tr v-if="!currentDetail.associatedProjects.length">
+                              <td colspan="4" style="text-align: center; color: var(--muted); padding: 20px;">暂无关联项目</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    <div class="detail-field" style="grid-column: span 4;">
+                      <span class="detail-field__label">材料站照片</span>
+                      <div style="display: flex; gap: 12px; margin-top: 8px;">
+                         <div v-for="(photo, i) in currentDetail.photos" :key="i" style="width: 100px; height: 100px; background: #f1f5f9; border-radius: 8px; border: 1px dashed var(--line); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 12px; flex-shrink: 0;">{{ photo }}</div>
+                      </div>
+                    </div>
+
+                    <div class="detail-field" style="grid-column: span 4;"><span class="detail-field__label">备注</span><span class="detail-field__value">{{ currentDetail.remarks || '-' }}</span></div>
+                  </template>
+                  
+                  <!-- 其他审批类型的基础字段（可根据需要扩展） -->
+                  <template v-else>
+                    <div class="detail-field"><span class="detail-field__label">材料站全称</span><span class="detail-field__value">{{ currentDetail.fullName }}</span></div>
+                    <div class="detail-field"><span class="detail-field__label">材料站编码</span><span class="detail-field__value">{{ currentDetail.code }}</span></div>
+                    <div class="detail-field"><span class="detail-field__label">申请人</span><span class="detail-field__value">{{ currentDetail.applicant }}</span></div>
+                    <div class="detail-field"><span class="detail-field__label">申请时间</span><span class="detail-field__value">{{ currentDetail.applyTime }}</span></div>
+                  </template>
+                </div>
+              </div>
+            </div>
+
+            <!-- 审核信息 Tab -->
+            <div v-if="activeDetailTab === 'approval'" class="modal-content">
+              <div class="detail-card">
+                <h3 class="detail-card__title">审核轨迹</h3>
+                <div class="timeline">
+                  <div class="timeline-item" v-for="item in currentDetail.timeline" :key="item.id">
+                    <div class="timeline-item__tail"></div>
+                    <div class="timeline-item__node"></div>
+                    <div class="timeline-item__content">
+                      <div class="timeline-item__header">
+                        <strong>{{ item.nodeName }}</strong>
+                        <span class="timeline-item__time">{{ item.time }}</span>
+                      </div>
+                      <div class="timeline-item__body">
+                        <p><strong>操作人员：</strong>{{ item.operator }}</p>
+                        <p><strong>审核结果：</strong><span :class="'chip chip--' + statusTone(item.result)" style="height: 22px; min-height: 22px; font-size: 11px; line-height: 20px; padding: 0 8px;">{{ item.result }}</span></p>
+                        <p v-if="item.comment"><strong>审核意见：</strong>{{ item.comment }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 12px; background: #fff; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">
+            <button class="btn btn--primary" @click="closeDetail">关闭</button>
           </div>
         </div>
       </div>
