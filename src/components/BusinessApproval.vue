@@ -19,12 +19,12 @@ const tableColumns = [
 ]
 
 const approvalRows = [
-  { id: 0, code: 'ZCLZ20260928001', type: '转材料站', stationName: '国网沈阳供电公司铁西物资供应中心', project: '沈阳500kV盛京变电站扩建工程', applicant: '刘海', applicantPhone: '138-1234-5678', companyDept: '国网沈阳供电公司 / 物资部', applyTime: '2026-09-28 10:00', status: '待审批' },
-  { id: 1, code: 'XCTL20260927001', type: '现场退料', stationName: '国网大连供电公司甘井子物资供应中心', project: '大连220kV南部电网网架完善工程', applicant: '陈敏', applicantPhone: '139-8765-4321', companyDept: '国网大连供电公司 / 运检部', applyTime: '2026-09-27 15:30', status: '已通过' },
-  { id: 2, code: 'ZCLZ20260927001', type: '转材料站', stationName: '国网鞍山供电公司铁东物资周转站', project: '鞍山10kV农网改造升级项目', applicant: '周立', applicantPhone: '137-5555-6666', companyDept: '国网鞍山供电公司 / 营销部', applyTime: '2026-09-27 09:15', status: '已驳回' },
-  { id: 3, code: 'XCHY20260926001', type: '现场耗用', stationName: '国网抚顺供电公司顺城物资储备库', project: '抚顺66kV城东变电站新建工程', applicant: '韩雪', applicantPhone: '158-9999-8888', companyDept: '国网抚顺供电公司 / 财务部', applyTime: '2026-09-26 14:20', status: '待审批' },
-  { id: 4, code: 'ZCLZ20260926001', type: '转材料站', stationName: '国网本溪供电公司明山材料站', project: '本溪500kV徐家变电站改造工程', applicant: '王强', applicantPhone: '186-1111-2222', companyDept: '国网本溪供电公司 / 发建部', applyTime: '2026-09-26 11:10', status: '已通过' },
-  { id: 5, code: 'XCTL20260925001', type: '现场退料', stationName: '国网锦州供电公司凌河物资供应站', project: '锦州220kV松山输电线路工程', applicant: '李珂', applicantPhone: '189-3333-4444', companyDept: '国网锦州供电公司 / 物资部', applyTime: '2026-09-25 16:45', status: '待审批' },
+  { id: 0, code: 'ZCLZ20260928001', type: '转材料站', stationName: '国网沈阳供电公司铁西物资供应中心', project: '沈阳500kV盛京变电站扩建工程', applicant: '刘海', applicantPhone: '13812345678', companyDept: '国网沈阳供电公司 / 物资部', applyTime: '2026-09-28 10:00', status: '待审批' },
+  { id: 1, code: 'XCTL20260927001', type: '现场退料', stationName: '国网大连供电公司甘井子物资供应中心', project: '大连220kV南部电网网架完善工程', applicant: '陈敏', applicantPhone: '13987654321', companyDept: '国网大连供电公司 / 运检部', applyTime: '2026-09-27 15:30', status: '已通过' },
+  { id: 2, code: 'ZCLZ20260927001', type: '转材料站', stationName: '国网鞍山供电公司铁东物资周转站', project: '鞍山10kV农网改造升级项目', applicant: '周立', applicantPhone: '13755556666', companyDept: '国网鞍山供电公司 / 营销部', applyTime: '2026-09-27 09:15', status: '已驳回' },
+  { id: 3, code: 'XCHY20260926001', type: '现场耗用', stationName: '国网抚顺供电公司顺城物资储备库', project: '抚顺66kV城东变电站新建工程', applicant: '韩雪', applicantPhone: '15899998888', companyDept: '国网抚顺供电公司 / 财务部', applyTime: '2026-09-26 14:20', status: '待审批' },
+  { id: 4, code: 'ZCLZ20260926001', type: '转材料站', stationName: '国网本溪供电公司明山材料站', project: '本溪500kV徐家变电站改造工程', applicant: '王强', applicantPhone: '18611112222', companyDept: '国网本溪供电公司 / 发建部', applyTime: '2026-09-26 11:10', status: '已通过' },
+  { id: 5, code: 'XCTL20260925001', type: '现场退料', stationName: '国网锦州供电公司凌河物资供应站', project: '锦州220kV松山输电线路工程', applicant: '李珂', applicantPhone: '18933334444', companyDept: '国网锦州供电公司 / 物资部', applyTime: '2026-09-25 16:45', status: '待审批' },
 ]
 
 const createEmptyForm = () => ({
@@ -219,7 +219,7 @@ function openDetail(row, mode = 'detail') {
     materialList: generateMockMaterials(row.project),
     timeline: generateTimeline(row)
   }
-  activeDetailTab.value = 'info'
+  activeDetailTab.value = mode === 'process' ? 'approval' : 'info'
   detailModalVisible.value = true
 }
 
@@ -265,6 +265,20 @@ function handleBatchApprove() {
     alert('请先选择要审批的数据')
     return
   }
+
+  const selectedTypes = new Set()
+  selectedRows.value.forEach(code => {
+    const row = approvalRows.find(r => r.code === code)
+    if (row) {
+      selectedTypes.add(row.type)
+    }
+  })
+
+  if (selectedTypes.size > 1) {
+    alert('所选记录包含不同的申请类型，请选择相同申请类型的单据进行批量审批！')
+    return
+  }
+
   batchApproveMessage.value = `${selectedRows.value.join('、')}，上述申请单确认审批通过吗？`
   batchApproveConfirmVisible.value = true
 }
@@ -420,14 +434,14 @@ onBeforeUnmount(() => {
         <label class="field">
           <span>申请类型</span>
           <select v-model="form.type">
-            <option value="">全部类型</option>
+            <option value="">请选择申请类型</option>
             <option v-for="option in applicationTypeOptions" :key="option" :value="option">{{ option }}</option>
           </select>
         </label>
         <label class="field">
           <span>审批状态</span>
           <select v-model="form.status">
-            <option value="">全部状态</option>
+            <option value="">请选择审批状态</option>
             <option v-for="option in approvalStatusOptions" :key="option" :value="option">{{ option }}</option>
           </select>
         </label>
@@ -477,14 +491,6 @@ onBeforeUnmount(() => {
           <button class="btn btn--ghost" type="button" @click="handleBatchApprove">
             <span class="btn__icon">✓</span>
             批量审批通过
-          </button>
-          <button class="btn btn--ghost" type="button" @click="handleBatchReject">
-            <span class="btn__icon">✗</span>
-            批量驳回
-          </button>
-          <button class="btn btn--ghost" type="button" @click="handleExport">
-            <span class="btn__icon">↓</span>
-            导出
           </button>
         </div>
       </div>
@@ -539,6 +545,7 @@ onBeforeUnmount(() => {
               <td class="actions cell--actions">
                 <button class="text-button" type="button" v-if="row.status === '待审批'" @click="openDetail(row, 'approve')">审核</button>
                 <button class="text-button" type="button" @click="openDetail(row, 'detail')">详情</button>
+                <button class="text-button" type="button" @click="openDetail(row, 'process')">流程</button>
               </td>
             </tr>
           </tbody>
@@ -588,18 +595,22 @@ onBeforeUnmount(() => {
       <div v-if="detailModalVisible" class="modal-overlay" @click.self="closeDetail">
         <div class="modal-dialog">
           <div class="modal-header">
-            <h2 class="modal-title">业务审批详情 - {{ currentDetail?.type }} - {{ currentDetail?.code }}</h2>
+            <h2 class="modal-title" v-if="modalMode === 'process'">
+              查看流程跟踪
+            </h2>
+            <h2 class="modal-title" v-else>
+              业务审批详情 - 
+              <span style="color: #1e3a8a;">{{ currentDetail?.type }}</span> - 
+              <span style="color: #9ca3af;">{{ currentDetail?.code }}</span>
+            </h2>
             <button class="icon-button icon-button--ghost" style="width: 32px; height: 32px; border-radius: 8px;" @click="closeDetail">
               <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
           </div>
-          <div class="modal-tabs">
-            <div class="modal-tab" :class="{'modal-tab--active': activeDetailTab === 'info'}" @click="activeDetailTab = 'info'">申请单信息</div>
-            <div class="modal-tab" :class="{'modal-tab--active': activeDetailTab === 'approval'}" @click="activeDetailTab = 'approval'">审核信息</div>
-          </div>
+          <!-- Tab bar is now completely removed since detail, process, and approve modes all only show single content types -->
           <div class="modal-body">
-            <!-- Info Tab -->
-            <div v-if="activeDetailTab === 'info'" class="modal-content">
+            <!-- Info Content (Visible in detail mode and approve mode) -->
+            <div v-if="modalMode === 'approve' || modalMode === 'detail'" class="modal-content">
               <div class="detail-card">
                 <div class="detail-grid">
                   <div class="detail-field"><span class="detail-field__label">申请人</span><span class="detail-field__value">{{ currentDetail.applicant }}</span></div>
@@ -696,8 +707,8 @@ onBeforeUnmount(() => {
               </div>
             </div>
 
-            <!-- Approval Tab -->
-            <div v-if="activeDetailTab === 'approval'" class="modal-content">
+            <!-- Approval Content (Visible only in process mode) -->
+            <div v-if="modalMode === 'process'" class="modal-content">
               <div class="detail-card">
                 <h3 class="detail-card__title">审核轨迹</h3>
                 <div class="timeline">
