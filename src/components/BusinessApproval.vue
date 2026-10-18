@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 
-const applicationTypeOptions = ['现场耗用', '转材料站', '现场退料']
+const applicationTypeOptions = ['现场耗用', '转材料站', '现场退料', '库存盘点']
 const approvalStatusOptions = ['待审批', '已通过', '已驳回']
 
 const tableColumns = [
@@ -25,6 +25,8 @@ const approvalRows = [
   { id: 3, code: 'XCHY20260926001', type: '现场耗用', stationName: '国网抚顺供电公司顺城物资储备库', project: '抚顺66kV城东变电站新建工程', applicant: '韩雪', applicantPhone: '15899998888', companyDept: '国网抚顺供电公司 / 财务部', applyTime: '2026-09-26 14:20', status: '待审批' },
   { id: 4, code: 'ZCLZ20260926001', type: '转材料站', stationName: '国网本溪供电公司明山材料站', project: '本溪500kV徐家变电站改造工程', applicant: '王强', applicantPhone: '18611112222', companyDept: '国网本溪供电公司 / 发建部', applyTime: '2026-09-26 11:10', status: '已通过' },
   { id: 5, code: 'XCTL20260925001', type: '现场退料', stationName: '国网锦州供电公司凌河物资供应站', project: '锦州220kV松山输电线路工程', applicant: '李珂', applicantPhone: '18933334444', companyDept: '国网锦州供电公司 / 物资部', applyTime: '2026-09-25 16:45', status: '待审批' },
+  { id: 6, code: 'KCPD20260929003', type: '库存盘点', stationName: '国网丹东供电公司物资库', project: '丹东配网改造项目', applicant: '赵强', applicantPhone: '13511112222', companyDept: '国网丹东供电公司 / 物资部', applyTime: '2026-09-29 09:30', status: '已通过' },
+  { id: 7, code: 'KCPD20260929004', type: '库存盘点', stationName: '国网营口供电公司物资库', project: '营口配网改造项目', applicant: '孙伟', applicantPhone: '13622223333', companyDept: '国网营口供电公司 / 物资部', applyTime: '2026-09-29 10:15', status: '待审批' },
 ]
 
 const createEmptyForm = () => ({
@@ -53,6 +55,37 @@ const modalMode = ref('detail') // 'detail' | 'approve'
 const approveConfirmVisible = ref(false)
 const rejectPromptVisible = ref(false)
 const rejectReason = ref('')
+
+// Sign Report Modal State
+const signReportModalVisible = ref(false)
+const leaderSignature = ref({
+  photo: '', // Start empty to trigger the required check
+  name: '王建国',
+  position: '部门经理',
+  signTime: ''
+})
+
+function handleSignReport() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const date = String(now.getDate()).padStart(2, '0')
+  const hours = String(now.getHours()).padStart(2, '0')
+  const minutes = String(now.getMinutes()).padStart(2, '0')
+  leaderSignature.value.signTime = `${year}-${month}-${date} ${hours}:${minutes}`
+  leaderSignature.value.photo = '' // empty for test
+  signReportModalVisible.value = true
+}
+
+function confirmSignReport() {
+  if (!leaderSignature.value.photo) {
+    alert('请联系管理员，更新领导签名照片')
+    return
+  }
+  alert('报告已生成并签署')
+  signReportModalVisible.value = false
+  closeDetail()
+}
 
 function handlePass() {
   approveConfirmVisible.value = true
@@ -203,6 +236,9 @@ function openDetail(row, mode = 'detail') {
   const returnReason = returnReasons[Math.floor(Math.random() * returnReasons.length)]
   const relatedApplyCode = 'XCHY' + String(Math.floor(Math.random() * 10000000)).padStart(7, '0') + '001'
 
+  const yearMonth = row.applyTime ? row.applyTime.substring(0, 4) + '年' + row.applyTime.substring(5, 7) + '月' : '2026年09月'
+  const inventoryRecordName = `${station.name}-${yearMonth}-第${Math.floor(Math.random() * 5) + 1}次盘点`
+
   currentDetail.value = {
     ...row,
     description: '现场施工急需，用于一期工程基础建设，请尽快审批发放。',
@@ -216,6 +252,10 @@ function openDetail(row, mode = 'detail') {
     relatedApplyCode: relatedApplyCode,
     returnReason: returnReason,
     returnDescription: '施工结束后剩余物料，现申请退库处理。',
+    inventoryRecordName: inventoryRecordName,
+    signName: '王建国',
+    signPosition: '部门经理',
+    signTime: '2026-09-30 15:30',
     materialList: generateMockMaterials(row.project),
     timeline: generateTimeline(row)
   }
@@ -613,15 +653,33 @@ onBeforeUnmount(() => {
             <div v-if="modalMode === 'approve' || modalMode === 'detail'" class="modal-content">
               <div class="detail-card">
                 <div class="detail-grid">
-                  <div class="detail-field"><span class="detail-field__label">申请人</span><span class="detail-field__value">{{ currentDetail.applicant }}</span></div>
-                  <div class="detail-field"><span class="detail-field__label">申请人联系方式</span><span class="detail-field__value">{{ currentDetail.applicantPhone }}</span></div>
+                  <div class="detail-field"><span class="detail-field__label">{{ currentDetail.type === '库存盘点' ? '盘点人' : '申请人' }}</span><span class="detail-field__value">{{ currentDetail.applicant }}</span></div>
+                  <div class="detail-field"><span class="detail-field__label">{{ currentDetail.type === '库存盘点' ? '盘点人联系方式' : '申请人联系方式' }}</span><span class="detail-field__value">{{ currentDetail.applicantPhone }}</span></div>
                   <div class="detail-field"><span class="detail-field__label">所属公司/部门</span><span class="detail-field__value">{{ currentDetail.companyDept }}</span></div>
-                  <div class="detail-field"><span class="detail-field__label">申请时间</span><span class="detail-field__value">{{ currentDetail.applyTime }}</span></div>
+                  <div class="detail-field"><span class="detail-field__label">{{ currentDetail.type === '库存盘点' ? '盘点时间' : '申请时间' }}</span><span class="detail-field__value">{{ currentDetail.applyTime }}</span></div>
                   <div class="detail-field"><span class="detail-field__label">材料站全称</span><span class="detail-field__value">{{ currentDetail.stationName }}</span></div>
                   <div class="detail-field"><span class="detail-field__label">材料站编码</span><span class="detail-field__value">{{ currentDetail.stationCode }}</span></div>
                   <div class="detail-field" style="grid-column: span 2;"><span class="detail-field__label">材料站地址</span><span class="detail-field__value">{{ currentDetail.stationAddress }}</span></div>
                   
-                  <template v-if="currentDetail.type !== '现场退料'">
+                  <template v-if="currentDetail.type === '库存盘点'">
+                    <div class="detail-field" style="grid-column: span 2;"><span class="detail-field__label">盘点记录名称</span><span class="detail-field__value">{{ currentDetail.inventoryRecordName }}</span></div>
+                    <div class="detail-field" style="grid-column: span 2;">
+                      <span class="detail-field__label">盘点人照片</span>
+                      <div style="display: flex; gap: 12px; margin-top: 4px;">
+                         <div v-for="(photo, i) in currentDetail.photos" :key="i" style="width: 80px; height: 80px; background: #f1f5f9; border-radius: 8px; border: 1px dashed var(--line); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 12px;">照片 {{i+1}}</div>
+                      </div>
+                    </div>
+                    <template v-if="currentDetail.status === '已通过'">
+                      <div class="detail-field" style="grid-column: span 1;"><span class="detail-field__label">签署人姓名</span><span class="detail-field__value">{{ currentDetail.signName }}</span></div>
+                      <div class="detail-field" style="grid-column: span 1;"><span class="detail-field__label">签署人岗位</span><span class="detail-field__value">{{ currentDetail.signPosition }}</span></div>
+                      <div class="detail-field" style="grid-column: span 1;"><span class="detail-field__label">签署时间</span><span class="detail-field__value">{{ currentDetail.signTime }}</span></div>
+                      <div class="detail-field" style="grid-column: span 1;">
+                        <span class="detail-field__label">签署人签名照片</span>
+                        <div style="width: 60px; height: 30px; background: #f8fafc; border: 1px dashed var(--line); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 12px; margin-top: 4px;">已签名</div>
+                      </div>
+                    </template>
+                  </template>
+                  <template v-else-if="currentDetail.type !== '现场退料'">
                     <template v-if="currentDetail.type === '转材料站'">
                       <div class="detail-field" style="grid-column: span 1;"><span class="detail-field__label">目标材料站全称</span><span class="detail-field__value">{{ currentDetail.targetStationName }}</span></div>
                       <div class="detail-field" style="grid-column: span 1;"><span class="detail-field__label">目标材料站编码</span><span class="detail-field__value">{{ currentDetail.targetStationCode }}</span></div>
@@ -658,10 +716,10 @@ onBeforeUnmount(() => {
                         <th style="width: 70px; z-index: 0;">行项目</th>
                         <th style="width: 90px; z-index: 0;">物料编码</th>
                         <th style="width: 200px; z-index: 0;">物料描述</th>
-                        <th style="width: 80px; z-index: 0;">{{ currentDetail.type === '现场退料' ? '退料数量' : '领用数量' }}</th>
+                        <th style="width: 80px; z-index: 0;">{{ currentDetail.type === '库存盘点' ? '在库数量' : (currentDetail.type === '现场退料' ? '退料数量' : '领用数量') }}</th>
                         <th style="width: 70px; z-index: 0;">计量单位</th>
                         <th style="width: 150px; z-index: 0;">所属项目</th>
-                        <th style="width: 80px; z-index: 0;">订单类型</th>
+                        <th style="width: 80px; z-index: 0;">{{ currentDetail.type === '库存盘点' ? '实物照片' : '订单类型' }}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -674,7 +732,10 @@ onBeforeUnmount(() => {
                         <td>{{ mat.quantity }}</td>
                         <td>{{ mat.unit }}</td>
                         <td :title="mat.project"><span class="chip chip--soft" style="max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;">{{ formatTextTruncate(mat.project, 10) }}</span></td>
-                        <td>{{ mat.orderType }}</td>
+                        <td>
+                          <a href="#" v-if="currentDetail.type === '库存盘点'" style="color: var(--primary); text-decoration: none;" @click.prevent>查看</a>
+                          <template v-else>{{ mat.orderType }}</template>
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -733,8 +794,13 @@ onBeforeUnmount(() => {
           </div>
           
           <div class="modal-footer" v-if="modalMode === 'approve'" style="padding: 16px 24px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 12px; background: #fff; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">
-            <button class="btn btn--ghost" style="color: #ff4d4f; border-color: #ff4d4f; background: #fff;" @click="handleReject">驳回</button>
-            <button class="btn btn--primary" @click="handlePass">审批通过</button>
+            <template v-if="currentDetail.type === '库存盘点'">
+              <button class="btn btn--primary" @click="handleSignReport">签署并生成报告</button>
+            </template>
+            <template v-else>
+              <button class="btn btn--ghost" style="color: #ff4d4f; border-color: #ff4d4f; background: #fff;" @click="handleReject">驳回</button>
+              <button class="btn btn--primary" @click="handlePass">审批通过</button>
+            </template>
           </div>
         </div>
       </div>
@@ -816,6 +882,48 @@ onBeforeUnmount(() => {
           <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 12px; background: #fff;">
             <button class="btn btn--ghost" @click="rejectPromptVisible = false">取消</button>
             <button class="btn btn--primary" style="background: #ff4d4f; border-color: #ff4d4f;" @click="confirmReject">确认驳回</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 签署并生成报告弹窗 -->
+      <div v-if="signReportModalVisible" class="modal-overlay" style="z-index: 1100; display: flex; align-items: center; justify-content: center;" @click.self="signReportModalVisible = false">
+        <div class="modal-dialog" style="width: 400px; max-width: 90vw; border-radius: 12px; overflow: hidden; margin: 0; background: #fff;">
+          <div class="modal-header" style="padding: 16px 24px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center;">
+            <h3 class="modal-title" style="font-size: 16px; margin: 0;">签署并生成报告</h3>
+            <button class="icon-button icon-button--ghost" style="width: 28px; height: 28px; border-radius: 6px;" @click="signReportModalVisible = false">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          <div class="modal-body" style="padding: 24px;">
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--muted); font-size: 14px;">姓名</span>
+                <span style="font-size: 14px;">{{ leaderSignature.name }}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--muted); font-size: 14px;">岗位</span>
+                <span style="font-size: 14px;">{{ leaderSignature.position }}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--muted); font-size: 14px;">签署时间</span>
+                <span style="font-size: 14px;">{{ leaderSignature.signTime }}</span>
+              </div>
+              <div style="margin-top: 8px;">
+                <div style="color: var(--muted); font-size: 14px; margin-bottom: 8px;"><span style="color: #ff4d4f; margin-right: 4px;">*</span>领导手写签名</div>
+                <div style="width: 100%; height: 120px; background: #f8fafc; border: 1px dashed var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                  <img v-if="leaderSignature.photo" :src="leaderSignature.photo" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+                  <div v-else style="display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--muted);">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    <span style="font-size: 12px;">空暂未图</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 12px; background: #fff;">
+            <button class="btn btn--ghost" @click="signReportModalVisible = false">取消</button>
+            <button class="btn btn--primary" @click="confirmSignReport">确定</button>
           </div>
         </div>
       </div>
