@@ -902,6 +902,13 @@ select {
   color: var(--primary);
 }
 
+.text-button--disabled {
+  color: var(--muted) !important;
+  cursor: not-allowed !important;
+  opacity: 0.6;
+  transform: none !important;
+}
+
 .empty-state {
   min-height: 260px;
   display: grid;

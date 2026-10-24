@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 
 const approvalTypeOptions = ['材料站注册', '材料站变更', '材料站启用', '材料站停用']
 const approvalStatusOptions = ['待审批', '已通过', '已驳回']
@@ -28,6 +28,13 @@ const approvalRows = [
   { id: 6, type: '材料站变更', fullName: '锦州凌河物资供应站材料站', code: 'XRFF006', project: '锦州220kV松山输电线路工程', applicant: '李珂', applicantPhone: '189-3333-4444', companyDept: '国网锦州供电公司 / 物资部', applyTime: '2026-10-07 16:45', status: '待审批' },
 ]
 
+const props = defineProps({
+  initialFilter: {
+    type: Object,
+    default: () => ({})
+  }
+})
+
 const createEmptyForm = () => ({
   fullName: '',
   type: '',
@@ -40,6 +47,25 @@ const createEmptyForm = () => ({
 
 const form = reactive(createEmptyForm())
 const activeFilters = ref(createEmptyForm())
+
+onMounted(() => {
+  if (props.initialFilter && Object.keys(props.initialFilter).length > 0) {
+    Object.assign(form, props.initialFilter)
+    Object.assign(activeFilters.value, props.initialFilter)
+  }
+  applyFilters()
+})
+
+// 监听初始筛选条件的变更（由父组件触发）
+watch(() => props.initialFilter, (newFilter) => {
+  if (newFilter && Object.keys(newFilter).length > 0) {
+    Object.assign(form, createEmptyForm()) // 先清空
+    Object.assign(form, newFilter)
+    Object.assign(activeFilters.value, createEmptyForm())
+    Object.assign(activeFilters.value, newFilter)
+    applyFilters()
+  }
+}, { deep: true })
 const currentPage = ref(1)
 const pageSize = ref(10)
 const sortState = ref({ key: 'applyTime', direction: 'desc' })
@@ -284,10 +310,6 @@ function closeDetail() {
   detailModalVisible.value = false
   currentDetail.value = null
 }
-
-onMounted(() => {
-  startLoading()
-})
 
 onBeforeUnmount(() => {
   window.clearTimeout(loadingTimer)

@@ -51,7 +51,6 @@ const openTabs = ref([
 ])
 
 const warehouseNatureOptions = ['变电站', '项目现场', '地市公司库房', '其他']
-const approvalStatusOptions = ['待审批', '已通过', '已驳回']
 const warehouseStatusOptions = ['启用', '停用', '-']
 const specialtyOptions = ['发展', '安监', '设备营销', '物资', '调度', '数字化']
 const firstUnitOptions = [
@@ -79,10 +78,6 @@ const tableColumns = [
   { key: 'locationInfo', label: '位置信息', width: '160px', sortable: true },
   { key: 'coordinates', label: '经纬度', width: '140px', sortable: true },
   { key: 'note', label: '备注', width: '190px', sortable: true },
-  { key: 'approvalStatus', label: '审批状态', width: '110px', sortable: true },
-  { key: 'approver', label: '审批人', width: '100px', sortable: true },
-  { key: 'approverPhone', label: '审批人联系方式', width: '150px', sortable: true },
-  { key: 'approvalTime', label: '审批时间', width: '160px', sortable: true },
   { key: 'warehouseStatus', label: '仓库状态', width: '110px', sortable: true },
   { key: 'registrar', label: '注册人', width: '100px', sortable: true },
   { key: 'registrarPhone', label: '注册人联系方式', width: '150px', sortable: true },
@@ -107,7 +102,7 @@ const warehouseRows = [
     nature: '变电站',
     fullName: 'G312改扩建项目临时材料站',
     code: 'WH-312-001',
-    project: 'G312改扩建项目',
+    project: ['G312改扩建项目', '沈阳北二路高架工程'],
     provinceCityCounty: '辽宁省 / 沈阳市 / 和平区',
     address: '辽宁省沈阳市和平区南三好街28号',
     locationInfo: '主出入口东侧 120m',
@@ -151,7 +146,7 @@ const warehouseRows = [
     nature: '地市公司库房',
     fullName: '南环高速提升工程综合仓',
     code: 'WH-NH-220',
-    project: '南环高速提升工程',
+    project: ['南环高速提升工程', '沈阳东二环立体化改造', '浑南大道快速路建设'],
     provinceCityCounty: '辽宁省 / 鞍山市 / 铁东区',
     address: '辽宁省鞍山市铁东区千山中路38号',
     locationInfo: '靠近搅拌站北门',
@@ -415,7 +410,7 @@ const createEmptyForm = () => ({
   fullName: '',
   project: '',
   nature: '',
-  approvalStatus: '',
+  warehouseCode: '',
   firstUnit: '',
   secondUnit: '',
   thirdDepartment: '',
@@ -436,14 +431,36 @@ const filtersExpanded = ref(false)
 const toast = ref(null)
 const importInput = ref(null)
 
+// Action Confirmation State
+const actionConfirmVisible = ref(false)
+const actionConfirmTitle = ref('')
+const actionConfirmMessage = ref('')
+const pendingAction = ref(null)
+
+// Flow Tracking State
+const flowTrackingVisible = ref(false)
+const activeFlowType = ref('注册')
+const currentFlowRow = ref(null)
+const flowTrackingData = ref({
+  registration: [],
+  change: [],
+  enable: [],
+  disable: []
+})
+
+const approvalFilter = ref({})
+
+function jumpToApproval(type, row) {
+  approvalFilter.value = {
+    fullName: rowWarehouseFullName(row),
+    type: `材料站${type}`
+  }
+  flowTrackingVisible.value = false
+  activateTab('material-approval')
+}
+
 let loadingTimer = null
 let toastTimer = null
-
-const statusOrder = {
-  待审批: 0,
-  已通过: 1,
-  已驳回: 2,
-}
 
 const warehouseOrder = {
   启用: 0,
@@ -478,6 +495,10 @@ function getColumnValue(row, key) {
   if (key === 'thirdDepartment') return rowThirdDepartment(row)
   if (key === 'specialty') return rowSpecialty(row)
   if (key === 'warehouseStatus') return displayWarehouseStatus(row)
+  if (key === 'project') {
+    const projects = row[key]
+    return Array.isArray(projects) ? projects.join('，') : projects
+  }
   return row[key] ?? ''
 }
 
@@ -513,13 +534,16 @@ function rowWarehouseFullName(row) {
 }
 
 function rowActionItems(row) {
-  if (row.approvalStatus === '待审批' || row.approvalStatus === '已驳回') {
-    return ['照片', '流程']
+  const status = displayWarehouseStatus(row)
+  const actions = ['更新', '流程']
+
+  if (status === '启用') {
+    actions.push('停用')
+  } else if (status === '停用') {
+    actions.push('启用')
   }
 
-  return displayWarehouseStatus(row) === '停用'
-    ? ['更新', '启用', '照片', '流程']
-    : ['更新', '停用', '照片', '流程']
+  return actions
 }
 
 const filteredRows = computed(() => {
@@ -535,12 +559,12 @@ const filteredRows = computed(() => {
 
     return (
       textMatch(rowWarehouseFullName(row), filters.fullName) &&
-      textMatch(row.project, filters.project) &&
+      textMatch(getColumnValue(row, 'project'), filters.project) &&
+      textMatch(row.code, filters.warehouseCode) &&
       textMatch(rowFirstUnit(row), filters.firstUnit) &&
       textMatch(rowSecondUnit(row), filters.secondUnit) &&
       textMatch(rowThirdDepartment(row), filters.thirdDepartment) &&
       (!filters.nature || row.nature === filters.nature) &&
-      (!filters.approvalStatus || row.approvalStatus === filters.approvalStatus) &&
       (!filters.specialty || rowSpecialty(row) === filters.specialty) &&
       (!filters.warehouseStatus || displayWarehouseStatus(row) === filters.warehouseStatus) &&
       dateStartOk &&
@@ -574,13 +598,13 @@ const startIndex = computed(() => (currentPage.value - 1) * pageSize.value)
 
 function sortValue(row, key) {
   if (key === 'index') return row.code
-  if (key === 'approvalStatus') return `${statusOrder[row.approvalStatus] ?? 99}-${row.approvalTime}`
   if (key === 'warehouseStatus') return `${warehouseOrder[displayWarehouseStatus(row)] ?? 99}-${row.code}`
   if (key === 'fullName') return rowWarehouseFullName(row)
   if (key === 'firstUnit') return rowFirstUnit(row)
   if (key === 'secondUnit') return rowSecondUnit(row)
   if (key === 'thirdDepartment') return rowThirdDepartment(row)
   if (key === 'specialty') return rowSpecialty(row)
+  if (key === 'project') return getColumnValue(row, 'project')
   return row[key] ?? ''
 }
 
@@ -745,7 +769,86 @@ function handleExport() {
 }
 
 function handleRowAction(action, row) {
+  if (action === '启用' || action === '停用') {
+    actionConfirmTitle.value = `${action}确认`
+    actionConfirmMessage.value = `是否确认${action}该综合材料站？`
+    pendingAction.value = { action, row }
+    actionConfirmVisible.value = true
+    return
+  }
+  
+  if (action === '流程') {
+    currentFlowRow.value = row
+    activeFlowType.value = '注册'
+    
+    // 生成模拟审核轨迹数据
+    const mockTime = (days, hours = 0) => {
+      const date = new Date()
+      date.setDate(date.getDate() - days)
+      date.setHours(date.getHours() - hours)
+      return date.toISOString().slice(0, 16).replace('T', ' ')
+    }
+
+    flowTrackingData.value = {
+      registration: [
+        { id: 2, nodeName: '已通过', operator: '刘海', time: mockTime(28), result: '已通过', comment: '符合准入要求，准予注册' },
+        { id: 1, nodeName: '已提交', operator: row.registrar || '王强', time: mockTime(30), result: '已提交', comment: '申请注册综合材料站' }
+      ],
+      change: [
+        [
+          { id: 104, nodeName: '已通过', operator: '刘海', time: mockTime(14), result: '已通过', comment: '已补充完整，准予变更' },
+          { id: 103, nodeName: '已提交', operator: row.registrar || '王强', time: mockTime(15), result: '已提交', comment: '重新提交变更申请' }
+        ],
+        [
+          { id: 102, nodeName: '已驳回', operator: '刘海', time: mockTime(19), result: '已驳回', comment: '变更申请单据不完整，缺少现场照片' },
+          { id: 101, nodeName: '已提交', operator: row.registrar || '王强', time: mockTime(20), result: '已提交', comment: '申请变更仓库性质' }
+        ]
+      ],
+      enable: [
+        [
+          { id: 204, nodeName: '已通过', operator: '陈敏', time: mockTime(7), result: '已通过', comment: '验收合格，同意启用' },
+          { id: 203, nodeName: '已提交', operator: row.registrar || '王强', time: mockTime(8), result: '已提交', comment: '申请启用材料站' }
+        ],
+        [
+          { id: 202, nodeName: '待审批', operator: '陈敏', time: mockTime(9), result: '待审批', comment: '' },
+          { id: 201, nodeName: '已提交', operator: row.registrar || '王强', time: mockTime(10), result: '已提交', comment: '申请启用材料站' }
+        ]
+      ],
+      disable: row.warehouseStatus === '停用' ? [
+        [
+          { id: 302, nodeName: '已通过', operator: '韩雪', time: mockTime(4), result: '已通过', comment: '项目结束，物料已清空，同意停用' },
+          { id: 301, nodeName: '已提交', operator: row.registrar || '王强', time: mockTime(5), result: '已提交', comment: '项目已完工，申请停用' }
+        ]
+      ] : [
+        [
+          { id: 304, nodeName: '已驳回', operator: '韩雪', time: mockTime(0.5), result: '已驳回', comment: '站内仍有物料，需先完成物料移交' },
+          { id: 303, nodeName: '已提交', operator: row.registrar || '王强', time: mockTime(1), result: '已提交', comment: '临时维护，申请停用' }
+        ]
+      ]
+    }
+    
+    flowTrackingVisible.value = true
+    return
+  }
+  
   showToast(`${action}：${rowWarehouseFullName(row)}`, 'info')
+}
+
+function confirmRowAction() {
+  if (!pendingAction.value) return
+  const { action, row } = pendingAction.value
+  
+  // 模拟操作成功
+  showToast(`${action}成功：${rowWarehouseFullName(row)}`, 'success')
+  
+  // 更新本地状态模拟
+  const rowIndex = warehouseRows.findIndex(r => r.code === row.code)
+  if (rowIndex !== -1) {
+    warehouseRows[rowIndex].warehouseStatus = action === '启用' ? '启用' : '停用'
+  }
+  
+  actionConfirmVisible.value = false
+  pendingAction.value = null
 }
 
 function handleSearch() {
@@ -778,6 +881,7 @@ onBeforeUnmount(() => {
 function statusTone(value) {
   if (value === '已通过' || value === '启用') return 'success'
   if (value === '已驳回' || value === '停用') return 'danger'
+  if (value === '待审批') return 'warning'
   return 'neutral'
 }
 
@@ -908,11 +1012,8 @@ function sortIndicator(key) {
             </label>
 
             <label class="field">
-              <span>审批状态</span>
-              <select v-model="form.approvalStatus">
-                <option value="">全部状态</option>
-                <option v-for="option in approvalStatusOptions" :key="option" :value="option">{{ option }}</option>
-              </select>
+              <span>仓库编码</span>
+              <input v-model.trim="form.warehouseCode" type="text" placeholder="请输入仓库编码" @keydown.enter.prevent="handleSearch" />
             </label>
 
             <label v-show="filtersExpanded" class="field field--advanced">
@@ -1081,6 +1182,9 @@ function sortIndicator(key) {
                         v-for="action in rowActionItems(row)"
                         :key="action"
                         class="text-button"
+                        :class="{ 'text-button--disabled': action === '停用' && (startIndex + index + 1) === 11 }"
+                        :disabled="action === '停用' && (startIndex + index + 1) === 11"
+                        :title="action === '停用' && (startIndex + index + 1) === 11 ? '该综合材料站内仍有物料，故无法停用' : ''"
                         type="button"
                         @click="handleRowAction(action, row)"
                       >
@@ -1094,6 +1198,9 @@ function sortIndicator(key) {
                       <span class="chip" :class="`chip--${statusTone(getColumnValue(row, column.key))}`">
                         {{ getColumnValue(row, column.key) }}
                       </span>
+                    </td>
+                    <td v-else-if="column.key === 'project'" :title="Array.isArray(row.project) ? row.project.join('\n') : row.project">
+                      {{ getColumnValue(row, column.key) }}
                     </td>
                     <td v-else :title="getColumnValue(row, column.key)">
                       {{ getColumnValue(row, column.key) }}
@@ -1163,7 +1270,7 @@ function sortIndicator(key) {
         </section>
         </div>
         <BusinessApproval v-if="activeTabId === 'business-approval'" />
-        <MaterialStationApproval v-if="activeTabId === 'material-approval'" />
+        <MaterialStationApproval v-if="activeTabId === 'material-approval'" :initial-filter="approvalFilter" />
       </main>
     </div>
 
@@ -1180,5 +1287,127 @@ function sortIndicator(key) {
       accept=".csv,.xls,.xlsx"
       @change="handleImportFile"
     />
+
+    <!-- 操作二次确认框 -->
+    <teleport to="body">
+      <div v-if="actionConfirmVisible" class="modal-overlay" style="z-index: 1100; display: flex; align-items: center; justify-content: center;" @click.self="actionConfirmVisible = false">
+        <div class="modal-dialog" style="width: 400px; max-width: 90vw; border-radius: 12px; overflow: hidden; margin: 0;">
+          <div class="modal-header" style="padding: 16px 24px; border-bottom: 1px solid var(--line);">
+            <h3 class="modal-title" style="font-size: 16px; margin: 0;">{{ actionConfirmTitle }}</h3>
+            <button class="icon-button icon-button--ghost" style="width: 28px; height: 28px; border-radius: 6px;" @click="actionConfirmVisible = false">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          <div class="modal-body" style="padding: 24px; font-size: 14px; line-height: 1.5; color: var(--text-secondary);">
+            {{ actionConfirmMessage }}
+          </div>
+          <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 12px; background: #fff;">
+            <button class="btn btn--ghost" @click="actionConfirmVisible = false">取消</button>
+            <button class="btn btn--primary" @click="confirmRowAction">确认</button>
+          </div>
+        </div>
+      </div>
+    </teleport>
+
+    <!-- 流程跟踪弹窗 -->
+    <teleport to="body">
+      <div v-if="flowTrackingVisible" class="modal-overlay" style="z-index: 1100; display: flex; align-items: center; justify-content: center;" @click.self="flowTrackingVisible = false">
+        <div class="modal-dialog" style="width: 680px; max-width: 95vw; border-radius: 12px; overflow: hidden; margin: 0; background: #fff; max-height: 90vh; display: flex; flex-direction: column;">
+          <div class="modal-header" style="padding: 16px 24px; border-bottom: 1px solid var(--line); flex-shrink: 0;">
+            <h3 class="modal-title" style="font-size: 16px; margin: 0;">查看流程跟踪 - {{ rowWarehouseFullName(currentFlowRow) }}</h3>
+            <button class="icon-button icon-button--ghost" style="width: 28px; height: 28px; border-radius: 6px;" @click="flowTrackingVisible = false">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          
+          <div class="modal-tabs" style="display: flex; padding: 0 24px; border-bottom: 1px solid var(--line); flex-shrink: 0; background: #fcfcfc;">
+            <div 
+              v-for="type in ['注册', '变更', '启用', '停用']" 
+              :key="type"
+              class="modal-tab"
+              :class="{'modal-tab--active': activeFlowType === type}"
+              style="padding: 14px 20px; font-size: 14px; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s;"
+              @click="activeFlowType = type"
+            >
+              {{ type }}
+            </div>
+          </div>
+
+          <div class="modal-body" style="padding: 24px; overflow-y: auto; flex: 1;">
+            <!-- 注册流程轨迹 (单套) -->
+            <template v-if="activeFlowType === '注册'">
+              <div class="detail-card">
+                <h3 class="detail-card__title" style="font-size: 14px; margin-bottom: 20px; color: var(--text-primary); display: flex; align-items: center; justify-content: space-between;">
+                  <span>注册审核轨迹</span>
+                  <button class="btn btn--ghost btn--sm" style="font-size: 12px; height: 28px; padding: 0 12px;" @click="jumpToApproval('注册', currentFlowRow)">查看详情</button>
+                </h3>
+                <div class="timeline" v-if="flowTrackingData.registration.length">
+                  <div class="timeline-item" v-for="(item, i) in flowTrackingData.registration" :key="item.id">
+                    <div class="timeline-item__tail" v-if="i < flowTrackingData.registration.length - 1"></div>
+                    <div class="timeline-item__node"></div>
+                    <div class="timeline-item__content">
+                      <div class="timeline-item__header" style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                        <strong style="font-size: 14px;">{{ item.nodeName }}</strong>
+                        <span class="timeline-item__time" style="color: var(--text-tertiary); font-size: 12px;">{{ item.time }}</span>
+                      </div>
+                      <div class="timeline-item__body" style="background: #f8fafc; padding: 10px 12px; border-radius: 6px; font-size: 13px;">
+                        <p style="margin: 0 0 4px;"><strong>操作人员：</strong>{{ item.operator }}</p>
+                        <p v-if="item.result === '已驳回' && item.comment" style="margin: 4px 0 0; color: #ff4d4f;"><strong>驳回原因：</strong>{{ item.comment }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div v-else class="empty-state" style="padding: 40px 0;">暂无审核轨迹</div>
+              </div>
+            </template>
+
+            <!-- 变更/启用/停用流程轨迹 (多套) -->
+            <template v-else>
+              <div v-if="activeFlowType === '变更' ? flowTrackingData.change.length : (activeFlowType === '启用' ? flowTrackingData.enable.length : flowTrackingData.disable.length)">
+                <div 
+                  v-for="(set, setIdx) in (activeFlowType === '变更' ? flowTrackingData.change : (activeFlowType === '启用' ? flowTrackingData.enable : flowTrackingData.disable))" 
+                  :key="setIdx"
+                  class="detail-card"
+                  style="margin-bottom: 24px; border: 1px solid var(--line); border-radius: 8px; padding: 16px;"
+                >
+                  <h3 class="detail-card__title" style="font-size: 14px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+                    <span>第 {{ (activeFlowType === '变更' ? flowTrackingData.change.length : (activeFlowType === '启用' ? flowTrackingData.enable.length : flowTrackingData.disable.length)) - setIdx }} 次{{ activeFlowType }}审核轨迹</span>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <span class="chip chip--soft" style="font-size: 12px;">{{ set[0].result }}</span>
+                      <button class="btn btn--ghost btn--sm" style="font-size: 12px; height: 24px; padding: 0 8px;" @click="jumpToApproval(activeFlowType, currentFlowRow)">查看详情</button>
+                    </div>
+                  </h3>
+                  <div class="timeline">
+                    <div class="timeline-item" v-for="(item, i) in set" :key="item.id">
+                      <div class="timeline-item__tail" v-if="i < set.length - 1"></div>
+                      <div class="timeline-item__node"></div>
+                      <div class="timeline-item__content">
+                        <div class="timeline-item__header" style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                          <strong style="font-size: 14px;">{{ item.nodeName }}</strong>
+                          <span class="timeline-item__time" style="color: var(--text-tertiary); font-size: 12px;">{{ item.time }}</span>
+                        </div>
+                        <div class="timeline-item__body" style="background: #f8fafc; padding: 10px 12px; border-radius: 6px; font-size: 13px;">
+                          <p style="margin: 0 0 4px;"><strong>操作人员：</strong>{{ item.operator }}</p>
+                          <p v-if="item.result === '已驳回' && item.comment" style="margin: 4px 0 0; color: #ff4d4f;"><strong>驳回原因：</strong>{{ item.comment }}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="empty-state" style="padding: 60px 0;">
+                <div class="empty-state__icon">□</div>
+                <strong>暂无{{ activeFlowType }}记录</strong>
+                <p>该材料站尚未发起过{{ activeFlowType }}申请。</p>
+              </div>
+            </template>
+          </div>
+
+          <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; flex-shrink: 0; background: #fff;">
+            <button class="btn btn--primary" @click="flowTrackingVisible = false">关闭</button>
+          </div>
+        </div>
+      </div>
+    </teleport>
   </div>
 </template>
