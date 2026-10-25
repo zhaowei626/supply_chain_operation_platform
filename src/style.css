@@ -1293,7 +1293,8 @@ select {
   height: 12px;
   border-radius: 50%;
   background: var(--primary);
-  border: 2px solid var(--primary-soft);
+  border: 2px solid var(--surface-strong);
+  box-shadow: 0 0 0 2px var(--primary-soft);
   z-index: 1;
 }
 

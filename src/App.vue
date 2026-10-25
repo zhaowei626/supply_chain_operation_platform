@@ -856,7 +856,7 @@ function handleRowAction(action, row) {
           { id: 203, nodeName: '已提交', operator: row.registrar || '王强', time: mockTime(8), result: '已提交', comment: '申请启用材料站' }
         ],
         [
-          { id: 202, nodeName: '待审批', operator: '陈敏', time: mockTime(9), result: '待审批', comment: '' },
+          { id: 202, nodeName: '待审批', operator: '陈敏、刘海、韩雪', time: '-', result: '待审批', comment: '' },
           { id: 201, nodeName: '已提交', operator: row.registrar || '王强', time: mockTime(10), result: '已提交', comment: '申请启用材料站' }
         ]
       ],
@@ -1455,7 +1455,7 @@ function sortIndicator(key) {
                 <div class="timeline" v-if="flowTrackingData.registration.length">
                   <div class="timeline-item" v-for="(item, i) in flowTrackingData.registration" :key="item.id">
                     <div class="timeline-item__tail" v-if="i < flowTrackingData.registration.length - 1"></div>
-                    <div class="timeline-item__node"></div>
+                    <div class="timeline-item__node" :style="item.nodeName === '待审批' ? 'background-color: var(--muted); box-shadow: 0 0 0 2px rgba(29, 29, 31, 0.12);' : (item.nodeName === '已驳回' ? 'background-color: var(--danger); box-shadow: 0 0 0 2px var(--danger-soft);' : '')"></div>
                     <div class="timeline-item__content">
                       <div class="timeline-item__header" style="display: flex; justify-content: space-between; margin-bottom: 6px;">
                         <strong style="font-size: 14px;">{{ item.nodeName }}</strong>
@@ -1483,15 +1483,12 @@ function sortIndicator(key) {
                 >
                   <h3 class="detail-card__title" style="font-size: 14px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
                     <span>第 {{ (activeFlowType === '变更' ? flowTrackingData.change.length : (activeFlowType === '启用' ? flowTrackingData.enable.length : flowTrackingData.disable.length)) - setIdx }} 次{{ activeFlowType }}审核轨迹</span>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                      <span class="chip chip--soft" style="font-size: 12px;">{{ set[0].result }}</span>
-                      <button class="btn btn--ghost btn--sm" style="font-size: 12px; height: 24px; padding: 0 8px;" @click.stop="viewFlowDetail(activeFlowType, currentFlowRow)">查看详情</button>
-                    </div>
+                    <button class="btn btn--ghost btn--sm" style="font-size: 12px; height: 24px; padding: 0 8px;" @click.stop="viewFlowDetail(activeFlowType, currentFlowRow)">查看详情</button>
                   </h3>
                   <div class="timeline">
                     <div class="timeline-item" v-for="(item, i) in set" :key="item.id">
                       <div class="timeline-item__tail" v-if="i < set.length - 1"></div>
-                      <div class="timeline-item__node"></div>
+                      <div class="timeline-item__node" :style="item.nodeName === '待审批' ? 'background-color: var(--muted); box-shadow: 0 0 0 2px rgba(29, 29, 31, 0.12);' : (item.nodeName === '已驳回' ? 'background-color: var(--danger); box-shadow: 0 0 0 2px var(--danger-soft);' : '')"></div>
                       <div class="timeline-item__content">
                         <div class="timeline-item__header" style="display: flex; justify-content: space-between; margin-bottom: 6px;">
                           <strong style="font-size: 14px;">{{ item.nodeName }}</strong>
