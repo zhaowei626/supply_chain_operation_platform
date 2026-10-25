@@ -450,13 +450,59 @@ const flowTrackingData = ref({
 
 const approvalFilter = ref({})
 
-function jumpToApproval(type, row) {
-  approvalFilter.value = {
-    fullName: rowWarehouseFullName(row),
-    type: `材料站${type}`
+// --- Flow Detail Modal State ---
+const flowDetailVisible = ref(false)
+const flowDetailType = ref('')
+const flowDetailBefore = ref(null)
+const flowDetailAfter = ref(null)
+
+const flowDetailFields = [
+  { key: 'firstUnit', label: '一级单位' },
+  { key: 'secondUnit', label: '二级单位/部门' },
+  { key: 'thirdDepartment', label: '三级部门' },
+  { key: 'nature', label: '材料站性质' },
+  { key: 'fullName', label: '材料站全称' },
+  { key: 'code', label: '材料站编码' },
+  { key: 'project', label: '关联项目', isArray: true },
+  { key: 'provinceCityCounty', label: '所在省/市/县' },
+  { key: 'address', label: '详细地址' },
+  { key: 'locationInfo', label: '位置说明' },
+  { key: 'coordinates', label: '地理坐标' },
+  { key: 'note', label: '备注' }
+]
+
+function viewFlowDetail(type, row) {
+  if (!row) return;
+  
+  flowDetailType.value = type
+  
+  const rawData = row.value || row;
+  const afterData = JSON.parse(JSON.stringify(rawData))
+  afterData.firstUnit = rowFirstUnit(rawData)
+  afterData.secondUnit = rowSecondUnit(rawData)
+  afterData.thirdDepartment = rowThirdDepartment(rawData)
+  
+  if (type === '变更') {
+    const beforeData = JSON.parse(JSON.stringify(rawData))
+    beforeData.firstUnit = rowFirstUnit(rawData)
+    beforeData.secondUnit = rowSecondUnit(rawData)
+    beforeData.thirdDepartment = rowThirdDepartment(rawData)
+    // 模拟变更前的数据差异
+    beforeData.note = beforeData.note ? beforeData.note + '（旧版本）' : '暂无备注'
+    beforeData.locationInfo = '旧位置说明...'
+    if (Array.isArray(beforeData.project) && beforeData.project.length > 1) {
+      beforeData.project = [beforeData.project[0]]
+    } else if (typeof beforeData.project === 'string') {
+      beforeData.project = beforeData.project + '（旧）'
+    }
+    flowDetailBefore.value = beforeData
+    flowDetailAfter.value = afterData
+  } else {
+    flowDetailBefore.value = null
+    flowDetailAfter.value = afterData
   }
-  flowTrackingVisible.value = false
-  activateTab('material-approval')
+  
+  flowDetailVisible.value = true
 }
 
 let loadingTimer = null
@@ -1307,10 +1353,75 @@ function sortIndicator(key) {
           </div>
         </div>
       </div>
+      <!-- 查看详情悬浮框 (注册/启用/停用/变更) -->
+
     </teleport>
 
     <!-- 流程跟踪弹窗 -->
     <teleport to="body">
+      <!-- 查看详情悬浮框 (注册/启用/停用/变更) -->
+      <div v-if="flowDetailVisible" class="modal-overlay" style="z-index: 1150; display: flex; align-items: center; justify-content: center;" @click.self="flowDetailVisible = false">
+        <div class="modal-dialog" :style="{ width: flowDetailType === '变更' ? '900px' : '600px', maxWidth: '90vw', maxHeight: '85vh', borderRadius: '12px', overflow: 'hidden', margin: 0, display: 'flex', flexDirection: 'column', background: '#fff', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }">
+          <div class="modal-header" style="padding: 16px 24px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; background: #f8fafc; flex-shrink: 0;">
+            <h3 class="modal-title" style="font-size: 16px; margin: 0; display: flex; align-items: center; gap: 8px;">
+              <span>查看材料站{{ flowDetailType === '变更' ? '变更' : '' }}详情</span>
+              <span class="chip chip--soft" style="font-size: 12px; background: #e0f2fe; color: var(--primary);">{{ flowDetailType }}</span>
+            </h3>
+            <button class="icon-button icon-button--ghost" style="width: 28px; height: 28px; border-radius: 6px;" @click="flowDetailVisible = false">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          <div class="modal-body" style="padding: 24px; overflow-y: auto; flex: 1;">
+            
+            <!-- 变更类型：左右对比布局 -->
+            <template v-if="flowDetailType === '变更' && flowDetailBefore && flowDetailAfter">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                <!-- 变更前 -->
+                <div style="border: 1px solid var(--line); border-radius: 8px; overflow: hidden;">
+                  <div style="padding: 12px 16px; background: #f1f5f9; border-bottom: 1px solid var(--line); font-weight: 600; font-size: 14px; text-align: center;">变更前</div>
+                  <div style="padding: 16px;">
+                    <div v-for="field in flowDetailFields" :key="field.key" style="margin-bottom: 16px; display: flex; flex-direction: column;">
+                      <span style="color: var(--muted); font-size: 13px; margin-bottom: 4px;">{{ field.label }}</span>
+                      <span style="font-size: 14px; line-height: 1.5; word-break: break-all; white-space: normal;">
+                        {{ Array.isArray(flowDetailBefore[field.key]) ? flowDetailBefore[field.key].join('、') : (flowDetailBefore[field.key] || '-') }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <!-- 变更后 -->
+                <div style="border: 1px solid var(--line); border-radius: 8px; overflow: hidden;">
+                  <div style="padding: 12px 16px; background: #f1f5f9; border-bottom: 1px solid var(--line); font-weight: 600; font-size: 14px; text-align: center;">变更后</div>
+                  <div style="padding: 16px;">
+                    <div v-for="field in flowDetailFields" :key="field.key" style="margin-bottom: 16px; display: flex; flex-direction: column;">
+                      <span style="color: var(--muted); font-size: 13px; margin-bottom: 4px;">{{ field.label }}</span>
+                      <span style="font-size: 14px; line-height: 1.5; word-break: break-all; white-space: normal;" :style="{ color: (Array.isArray(flowDetailBefore[field.key]) ? flowDetailBefore[field.key].join('、') : flowDetailBefore[field.key]) !== (Array.isArray(flowDetailAfter[field.key]) ? flowDetailAfter[field.key].join('、') : flowDetailAfter[field.key]) ? '#ff4d4f' : 'inherit' }">
+                        {{ Array.isArray(flowDetailAfter[field.key]) ? flowDetailAfter[field.key].join('、') : (flowDetailAfter[field.key] || '-') }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+            
+            <!-- 注册/启用/停用：单列布局 -->
+            <template v-else-if="flowDetailAfter">
+              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid var(--line);">
+                <div v-for="field in flowDetailFields" :key="field.key" style="display: flex; flex-direction: column;" :style="['fullName', 'address', 'project', 'note'].includes(field.key) ? 'grid-column: span 2;' : ''">
+                  <span style="color: var(--muted); font-size: 13px; margin-bottom: 4px;">{{ field.label }}</span>
+                  <span style="font-size: 14px; line-height: 1.5; color: var(--text-primary); word-break: break-all; white-space: normal;">
+                    {{ Array.isArray(flowDetailAfter[field.key]) ? flowDetailAfter[field.key].join('、') : (flowDetailAfter[field.key] || '-') }}
+                  </span>
+                </div>
+              </div>
+            </template>
+
+          </div>
+          <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; flex-shrink: 0; background: #fff;">
+            <button class="btn btn--primary" @click="flowDetailVisible = false">关闭</button>
+          </div>
+        </div>
+      </div>
+      
       <div v-if="flowTrackingVisible" class="modal-overlay" style="z-index: 1100; display: flex; align-items: center; justify-content: center;" @click.self="flowTrackingVisible = false">
         <div class="modal-dialog" style="width: 680px; max-width: 95vw; border-radius: 12px; overflow: hidden; margin: 0; background: #fff; max-height: 90vh; display: flex; flex-direction: column;">
           <div class="modal-header" style="padding: 16px 24px; border-bottom: 1px solid var(--line); flex-shrink: 0;">
@@ -1339,7 +1450,7 @@ function sortIndicator(key) {
               <div class="detail-card">
                 <h3 class="detail-card__title" style="font-size: 14px; margin-bottom: 20px; color: var(--text-primary); display: flex; align-items: center; justify-content: space-between;">
                   <span>注册审核轨迹</span>
-                  <button class="btn btn--ghost btn--sm" style="font-size: 12px; height: 28px; padding: 0 12px;" @click="jumpToApproval('注册', currentFlowRow)">查看详情</button>
+                  <button class="btn btn--ghost btn--sm" style="font-size: 12px; height: 28px; padding: 0 12px;" @click.stop="viewFlowDetail('注册', currentFlowRow)">查看详情</button>
                 </h3>
                 <div class="timeline" v-if="flowTrackingData.registration.length">
                   <div class="timeline-item" v-for="(item, i) in flowTrackingData.registration" :key="item.id">
@@ -1374,7 +1485,7 @@ function sortIndicator(key) {
                     <span>第 {{ (activeFlowType === '变更' ? flowTrackingData.change.length : (activeFlowType === '启用' ? flowTrackingData.enable.length : flowTrackingData.disable.length)) - setIdx }} 次{{ activeFlowType }}审核轨迹</span>
                     <div style="display: flex; align-items: center; gap: 8px;">
                       <span class="chip chip--soft" style="font-size: 12px;">{{ set[0].result }}</span>
-                      <button class="btn btn--ghost btn--sm" style="font-size: 12px; height: 24px; padding: 0 8px;" @click="jumpToApproval(activeFlowType, currentFlowRow)">查看详情</button>
+                      <button class="btn btn--ghost btn--sm" style="font-size: 12px; height: 24px; padding: 0 8px;" @click.stop="viewFlowDetail(activeFlowType, currentFlowRow)">查看详情</button>
                     </div>
                   </h3>
                   <div class="timeline">
