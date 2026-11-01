@@ -2,6 +2,10 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import BusinessApproval from './components/BusinessApproval.vue'
 import MaterialStationApproval from './components/MaterialStationApproval.vue'
+import IncomeInbound from './components/IncomeInbound.vue'
+import SiteConsumption from './components/SiteConsumption.vue'
+import TransferMaterial from './components/TransferMaterial.vue'
+import SiteReturn from './components/SiteReturn.vue'
 
 const menuGroups = reactive([
   {
@@ -19,7 +23,7 @@ const menuGroups = reactive([
     expanded: true,
     items: [
       { id: 'business-approval', label: '业务审批', icon: '◦', active: false },
-      { id: 'income-inbound', label: '收入入站明细', icon: '◦', active: false },
+      { id: 'income-inbound', label: '收货入站明细', icon: '◦', active: false },
       { id: 'site-consumption', label: '现场耗用明细', icon: '◦', active: false },
       { id: 'transfer-material', label: '转材料站明细', icon: '◦', active: false },
       { id: 'site-return', label: '现场退料明细', icon: '◦', active: false },
@@ -1317,6 +1321,10 @@ function sortIndicator(key) {
         </div>
         <BusinessApproval v-if="activeTabId === 'business-approval'" />
         <MaterialStationApproval v-if="activeTabId === 'material-approval'" :initial-filter="approvalFilter" />
+        <IncomeInbound v-if="activeTabId === 'income-inbound'" />
+        <SiteConsumption v-if="activeTabId === 'site-consumption'" />
+        <TransferMaterial v-if="activeTabId === 'transfer-material'" />
+        <SiteReturn v-if="activeTabId === 'site-return'" />
       </main>
     </div>
 

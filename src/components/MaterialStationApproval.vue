@@ -346,16 +346,16 @@ onBeforeUnmount(() => {
           <span>申请人</span>
           <input v-model.trim="form.applicant" type="text" placeholder="请输入申请人" />
         </label>
-        <label class="field" style="grid-column: span 12;">
+        <label class="field">
           <span>申请时间范围</span>
-          <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
-            <input v-model="form.applyTimeStart" type="date" style="flex: 1;" />
-            <span style="padding: 0; min-width: auto; text-align: center;">-</span>
-            <input v-model="form.applyTimeEnd" type="date" style="flex: 1;" />
+          <div class="range-inputs">
+            <input v-model="form.applyTimeStart" type="date" />
+            <span>-</span>
+            <input v-model="form.applyTimeEnd" type="date" />
           </div>
         </label>
         
-        <div class="filter-actions" style="grid-column: span 6;">
+        <div class="filter-actions" style="grid-column: span 12;">
           <button class="btn btn--primary" type="submit">
             <span class="btn__icon btn__icon--light" aria-hidden="true">
               <svg viewBox="0 0 24 24" aria-hidden="true">
