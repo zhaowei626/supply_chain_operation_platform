@@ -49,6 +49,7 @@ const tableColumns = ref([
 
 // Mock data generator
 const generateMockData = (type) => {
+  const names = ['张伟', '王芳', '李娜', '刘强', '陈静', '杨洋', '赵敏', '黄勇', '周涛', '吴倩']
   return Array.from({ length: 25 }, (_, i) => ({
     id: i + 1,
     purchaseOrderNo: 'PO' + String(Math.floor(Math.random() * 10000000)).padStart(7, '0'),
@@ -62,8 +63,8 @@ const generateMockData = (type) => {
     projectName: '沈阳500kV盛京变电站扩建工程',
     wbsCode: 'WBS-' + String(Math.floor(Math.random() * 1000)).padStart(4, '0'),
     projectUnit: '国网辽宁省电力有限公司',
-    operator: '张三',
-    operatorPhone: '13800138000',
+    operator: names[i % names.length],
+    operatorPhone: '13' + Math.floor(Math.random() * 10) + '00' + Math.floor(Math.random() * 10) + '38' + String(Math.floor(Math.random() * 1000)).padStart(3, '0'),
     stationName: '国网沈阳供电公司铁西物资供应中心',
     stationCode: 'ST-SY-001',
     stationAddress: '辽宁省沈阳市铁西区北二中路18号',

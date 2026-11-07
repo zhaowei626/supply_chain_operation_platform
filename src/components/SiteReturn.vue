@@ -87,6 +87,8 @@ const materialColumns = ref([
 
 // Mock data generators
 const generateReturnOrderData = () => {
+  const operators = ['张伟', '王芳', '李娜', '刘强', '陈静', '杨洋', '赵敏', '黄勇', '周涛', '吴倩']
+  const approvers = ['王建国', '李德华', '赵晓明', '孙志远', '周美玲']
   return Array.from({ length: 25 }, (_, i) => ({
     id: i + 1,
     returnNo: 'XCTL20261101' + String(i + 1).padStart(3, '0'),
@@ -99,16 +101,17 @@ const generateReturnOrderData = () => {
     returnReason: '设计变更',
     returnDesc: '工程设计变更，部分材料不再需要',
     materialCategory: '线缆类',
-    operator: '张三',
-    operatorPhone: '13800138000',
+    operator: operators[i % operators.length],
+    operatorPhone: '13' + Math.floor(Math.random() * 10) + '00' + Math.floor(Math.random() * 10) + '38' + String(Math.floor(Math.random() * 1000)).padStart(3, '0'),
     submitTime: '2026-11-01 09:30',
-    approver: '李四',
-    approverPhone: '13900139000',
+    approver: approvers[i % approvers.length],
+    approverPhone: '15' + Math.floor(Math.random() * 10) + '99' + Math.floor(Math.random() * 10) + '88' + String(Math.floor(Math.random() * 1000)).padStart(3, '0'),
     approvalTime: '2026-11-01 10:15',
   }))
 }
 
 const generateMaterialData = () => {
+  const operators = ['张伟', '王芳', '李娜', '刘强', '陈静', '杨洋', '赵敏', '黄勇', '周涛', '吴倩']
   return Array.from({ length: 25 }, (_, i) => ({
     id: i + 1,
     returnNo: 'XCTL20261101' + String(i + 1).padStart(3, '0'),
@@ -126,8 +129,8 @@ const generateMaterialData = () => {
     projectName: '沈阳500kV盛京变电站扩建工程',
     wbsCode: 'WBS-' + String(Math.floor(Math.random() * 1000)).padStart(4, '0'),
     projectUnit: '国网辽宁省电力有限公司',
-    operator: '张三',
-    operatorPhone: '13800138000',
+    operator: operators[i % operators.length],
+    operatorPhone: '13' + Math.floor(Math.random() * 10) + '00' + Math.floor(Math.random() * 10) + '38' + String(Math.floor(Math.random() * 1000)).padStart(3, '0'),
     stationName: '国网沈阳供电公司铁西物资供应中心',
     stationCode: 'ST-SY-001',
     firstLevelUnit: '国网辽宁省电力有限公司',

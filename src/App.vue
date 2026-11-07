@@ -54,8 +54,8 @@ const openTabs = ref([
   { id: 'resource-view', label: '资源全景可视', active: false },
 ])
 
-const warehouseNatureOptions = ['变电站', '项目现场', '地市公司库房', '其他']
-const warehouseStatusOptions = ['启用', '停用', '-']
+const materialStationNatureOptions = ['变电站', '项目现场', '地市公司库房', '其他']
+const materialStationStatusOptions = ['启用', '停用', '-']
 const specialtyOptions = ['发展', '安监', '设备营销', '物资', '调度', '数字化']
 const firstUnitOptions = [
   '本部',
@@ -73,16 +73,16 @@ const tableColumns = [
   { key: 'secondUnit', label: '二级单位/部门', width: '170px', sortable: true },
   { key: 'thirdDepartment', label: '三级部门', width: '150px', sortable: true },
   { key: 'specialty', label: '所属专业', width: '110px', sortable: true },
-  { key: 'nature', label: '仓库性质', width: '110px', sortable: true },
-  { key: 'fullName', label: '仓库全称', width: '180px', sortable: true },
-  { key: 'code', label: '仓库编码', width: '130px', sortable: true },
+  { key: 'nature', label: '材料站性质', width: '110px', sortable: true },
+  { key: 'fullName', label: '材料站全称', width: '180px', sortable: true },
+  { key: 'code', label: '材料站编码', width: '130px', sortable: true },
   { key: 'project', label: '关联项目', width: '150px', sortable: true },
   { key: 'provinceCityCounty', label: '省/市/县', width: '150px', sortable: true },
-  { key: 'address', label: '仓库地址', width: '240px', sortable: true },
+  { key: 'address', label: '材料站地址', width: '240px', sortable: true },
   { key: 'locationInfo', label: '位置信息', width: '160px', sortable: true },
   { key: 'coordinates', label: '经纬度', width: '140px', sortable: true },
   { key: 'note', label: '备注', width: '190px', sortable: true },
-  { key: 'warehouseStatus', label: '仓库状态', width: '110px', sortable: true },
+  { key: 'warehouseStatus', label: '材料站状态', width: '110px', sortable: true },
   { key: 'registrar', label: '注册人', width: '100px', sortable: true },
   { key: 'registrarPhone', label: '注册人联系方式', width: '150px', sortable: true },
   { key: 'registrationTime', label: '注册时间', width: '160px', sortable: true },
@@ -99,7 +99,7 @@ const columnVisibility = reactive(
 const columnPickerOpen = ref(false)
 const columnPickerRef = ref(null)
 
-const warehouseRows = [
+const materialStationRows = [
   {
     company: '华东建工集团',
     department: '物资设备部',
@@ -373,7 +373,7 @@ const warehouseRows = [
     project: 'G312改扩建项目',
     provinceCityCounty: '辽宁省 / 沈阳市 / 浑南区',
     address: '辽宁省沈阳市浑南区创新路100号',
-    locationInfo: '主仓库西翼',
+    locationInfo: '主材料站西翼',
     coordinates: '31.3895, 120.9542',
     note: '消防设备单独编码，月度巡检。',
     approvalStatus: '已通过',
@@ -414,12 +414,12 @@ const createEmptyForm = () => ({
   fullName: '',
   project: '',
   nature: '',
-  warehouseCode: '',
+  materialStationCode: '',
   firstUnit: '',
   secondUnit: '',
   thirdDepartment: '',
   specialty: '',
-  warehouseStatus: '',
+  materialStationStatus: '',
   registrationStart: '',
   registrationEnd: '',
 })
@@ -512,13 +512,13 @@ function viewFlowDetail(type, row) {
 let loadingTimer = null
 let toastTimer = null
 
-const warehouseOrder = {
+const materialStationStatusOrder = {
   启用: 0,
   '-': 1,
   停用: 2,
 }
 
-function displayWarehouseStatus(row) {
+function displayMaterialStationStatus(row) {
   if (row.approvalStatus === '待审批' || row.approvalStatus === '已驳回') return '-'
   return row.warehouseStatus === '停用' ? '停用' : '启用'
 }
@@ -539,12 +539,12 @@ function rowSpecialty(row) {
 }
 
 function getColumnValue(row, key) {
-  if (key === 'fullName') return rowWarehouseFullName(row)
+  if (key === 'fullName') return rowMaterialStationFullName(row)
   if (key === 'firstUnit') return rowFirstUnit(row)
   if (key === 'secondUnit') return rowSecondUnit(row)
   if (key === 'thirdDepartment') return rowThirdDepartment(row)
   if (key === 'specialty') return rowSpecialty(row)
-  if (key === 'warehouseStatus') return displayWarehouseStatus(row)
+  if (key === 'warehouseStatus') return displayMaterialStationStatus(row)
   if (key === 'project') {
     const projects = row[key]
     return Array.isArray(projects) ? projects.join('，') : projects
@@ -571,7 +571,7 @@ const exportColumns = computed(() =>
 )
 
 function rowFirstUnit(row) {
-  const rowIndex = warehouseRows.findIndex(({ code }) => code === row.code)
+  const rowIndex = materialStationRows.findIndex(({ code }) => code === row.code)
   return firstUnitOptions[Math.max(rowIndex, 0) % firstUnitOptions.length]
 }
 
@@ -579,12 +579,12 @@ function rowSecondUnit(row) {
   return row.department
 }
 
-function rowWarehouseFullName(row) {
+function rowMaterialStationFullName(row) {
   return `${rowFirstUnit(row)}${rowThirdDepartment(row)}综合材料站`
 }
 
 function rowActionItems(row) {
-  const status = displayWarehouseStatus(row)
+  const status = displayMaterialStationStatus(row)
   const actions = ['更新', '流程']
 
   if (status === '启用') {
@@ -599,7 +599,7 @@ function rowActionItems(row) {
 const filteredRows = computed(() => {
   const filters = activeFilters.value
 
-  return warehouseRows.filter((row) => {
+  return materialStationRows.filter((row) => {
     const textMatch = (source, query) =>
       !query || String(source).toLowerCase().includes(query.toLowerCase())
 
@@ -608,15 +608,15 @@ const filteredRows = computed(() => {
     const dateEndOk = !filters.registrationEnd || row.registrationDate <= filters.registrationEnd
 
     return (
-      textMatch(rowWarehouseFullName(row), filters.fullName) &&
+      textMatch(rowMaterialStationFullName(row), filters.fullName) &&
       textMatch(getColumnValue(row, 'project'), filters.project) &&
-      textMatch(row.code, filters.warehouseCode) &&
+      textMatch(row.code, filters.materialStationCode) &&
       textMatch(rowFirstUnit(row), filters.firstUnit) &&
       textMatch(rowSecondUnit(row), filters.secondUnit) &&
       textMatch(rowThirdDepartment(row), filters.thirdDepartment) &&
       (!filters.nature || row.nature === filters.nature) &&
       (!filters.specialty || rowSpecialty(row) === filters.specialty) &&
-      (!filters.warehouseStatus || displayWarehouseStatus(row) === filters.warehouseStatus) &&
+      (!filters.materialStationStatus || displayMaterialStationStatus(row) === filters.materialStationStatus) &&
       dateStartOk &&
       dateEndOk
     )
@@ -648,8 +648,8 @@ const startIndex = computed(() => (currentPage.value - 1) * pageSize.value)
 
 function sortValue(row, key) {
   if (key === 'index') return row.code
-  if (key === 'warehouseStatus') return `${warehouseOrder[displayWarehouseStatus(row)] ?? 99}-${row.code}`
-  if (key === 'fullName') return rowWarehouseFullName(row)
+  if (key === 'warehouseStatus') return `${materialStationStatusOrder[displayMaterialStationStatus(row)] ?? 99}-${row.code}`
+  if (key === 'fullName') return rowMaterialStationFullName(row)
   if (key === 'firstUnit') return rowFirstUnit(row)
   if (key === 'secondUnit') return rowSecondUnit(row)
   if (key === 'thirdDepartment') return rowThirdDepartment(row)
@@ -851,7 +851,7 @@ function handleRowAction(action, row) {
         ],
         [
           { id: 102, nodeName: '已驳回', operator: '刘海', time: mockTime(19), result: '已驳回', comment: '变更申请单据不完整，缺少现场照片' },
-          { id: 101, nodeName: '已提交', operator: row.registrar || '王强', time: mockTime(20), result: '已提交', comment: '申请变更仓库性质' }
+          { id: 101, nodeName: '已提交', operator: row.registrar || '王强', time: mockTime(20), result: '已提交', comment: '申请变更材料站性质' }
         ]
       ],
       enable: [
@@ -881,7 +881,7 @@ function handleRowAction(action, row) {
     return
   }
   
-  showToast(`${action}：${rowWarehouseFullName(row)}`, 'info')
+  showToast(`${action}：${rowMaterialStationFullName(row)}`, 'info')
 }
 
 function confirmRowAction() {
@@ -889,12 +889,12 @@ function confirmRowAction() {
   const { action, row } = pendingAction.value
   
   // 模拟操作成功
-  showToast(`${action}成功：${rowWarehouseFullName(row)}`, 'success')
+  showToast(`${action}成功：${rowMaterialStationFullName(row)}`, 'success')
   
   // 更新本地状态模拟
-  const rowIndex = warehouseRows.findIndex(r => r.code === row.code)
+  const rowIndex = materialStationRows.findIndex(r => r.code === row.code)
   if (rowIndex !== -1) {
-    warehouseRows[rowIndex].warehouseStatus = action === '启用' ? '启用' : '停用'
+    materialStationRows[rowIndex].warehouseStatus = action === '启用' ? '启用' : '停用'
   }
   
   actionConfirmVisible.value = false
@@ -1049,28 +1049,28 @@ function sortIndicator(key) {
             @submit.prevent="handleSearch"
           >
             <label class="field">
-              <span>仓库全称</span>
-              <input v-model.trim="form.fullName" type="text" placeholder="请输入仓库全称" @keydown.enter.prevent="handleSearch" />
+              <span>材料站全称</span>
+              <input v-model.trim="form.fullName" type="text" placeholder="请输入材料站全称" @keydown.enter.prevent="handleSearch" />
             </label>
 
             <label class="field">
-              <span>仓库状态</span>
-              <select v-model="form.warehouseStatus">
+              <span>材料站状态</span>
+              <select v-model="form.materialStationStatus">
                 <option value="">全部状态</option>
-                <option v-for="option in warehouseStatusOptions" :key="option" :value="option">{{ option }}</option>
+                <option v-for="option in materialStationStatusOptions" :key="option" :value="option">{{ option }}</option>
               </select>
             </label>
 
             <label class="field">
-              <span>仓库编码</span>
-              <input v-model.trim="form.warehouseCode" type="text" placeholder="请输入仓库编码" @keydown.enter.prevent="handleSearch" />
+              <span>材料站编码</span>
+              <input v-model.trim="form.materialStationCode" type="text" placeholder="请输入材料站编码" @keydown.enter.prevent="handleSearch" />
             </label>
 
             <label v-show="filtersExpanded" class="field field--advanced">
-              <span>仓库性质</span>
+              <span>材料站性质</span>
               <select v-model="form.nature">
                 <option value="">全部性质</option>
-                <option v-for="option in warehouseNatureOptions" :key="option" :value="option">{{ option }}</option>
+                <option v-for="option in materialStationNatureOptions" :key="option" :value="option">{{ option }}</option>
               </select>
             </label>
 
@@ -1433,7 +1433,7 @@ function sortIndicator(key) {
       <div v-if="flowTrackingVisible" class="modal-overlay" style="z-index: 1100; display: flex; align-items: center; justify-content: center;" @click.self="flowTrackingVisible = false">
         <div class="modal-dialog" style="width: 680px; max-width: 95vw; border-radius: 12px; overflow: hidden; margin: 0; background: #fff; max-height: 90vh; display: flex; flex-direction: column;">
           <div class="modal-header" style="padding: 16px 24px; border-bottom: 1px solid var(--line); flex-shrink: 0;">
-            <h3 class="modal-title" style="font-size: 16px; margin: 0;">查看流程跟踪 - {{ rowWarehouseFullName(currentFlowRow) }}</h3>
+            <h3 class="modal-title" style="font-size: 16px; margin: 0;">查看流程跟踪 - {{ rowMaterialStationFullName(currentFlowRow) }}</h3>
             <button class="icon-button icon-button--ghost" style="width: 28px; height: 28px; border-radius: 6px;" @click="flowTrackingVisible = false">
               <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>

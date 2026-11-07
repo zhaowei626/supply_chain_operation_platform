@@ -291,7 +291,7 @@ function handleDetail(row) {
     nature: '项目现场',
     provinceCityCounty: '辽宁省 / 沈阳市 / 铁西区',
     coordinates: '123.364521, 41.798542',
-    address: '辽宁省沈阳市铁西区北二中路18号物资周转仓库',
+    address: '辽宁省沈阳市铁西区北二中路18号物资周转材料站',
     locationInfo: '北二中路与重工街交汇处向东200米，靠近物流园南门',
     registrant: row.applicant,
     registrantPhone: row.applicantPhone,
