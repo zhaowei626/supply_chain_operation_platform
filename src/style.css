@@ -707,26 +707,17 @@ select {
   border-top: 1px solid rgba(15, 23, 42, 0.04);
 }
 
-.column-picker__checkbox {
-  width: 16px;
-  height: 16px;
-  margin: 0;
-  padding: 0;
-  flex: none;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  appearance: auto;
-  accent-color: var(--primary);
-}
-
+.column-picker__checkbox,
 .table-checkbox {
   width: 16px;
   height: 16px;
   margin: 0;
   padding: 0;
+  flex: none;
   border: 1px solid var(--line-strong);
   border-radius: 4px;
+  background: transparent;
+  box-shadow: none;
   appearance: auto;
   accent-color: var(--primary);
   cursor: pointer;
@@ -766,6 +757,12 @@ select {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.data-table tbody td.cell--checkbox,
+.data-table thead th.cell--checkbox {
+  overflow: visible;
+  text-overflow: clip;
 }
 
 .data-table thead th {

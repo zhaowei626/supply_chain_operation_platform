@@ -6,6 +6,9 @@ import IncomeInbound from './components/IncomeInbound.vue'
 import SiteConsumption from './components/SiteConsumption.vue'
 import TransferMaterial from './components/TransferMaterial.vue'
 import SiteReturn from './components/SiteReturn.vue'
+import InventoryCheckRecord from './components/InventoryCheckRecord.vue'
+import StockMaterialManagement from './components/StockMaterialManagement.vue'
+import StockDetailQuery from './components/StockDetailQuery.vue'
 
 const menuGroups = reactive([
   {
@@ -1325,6 +1328,9 @@ function sortIndicator(key) {
         <SiteConsumption v-if="activeTabId === 'site-consumption'" />
         <TransferMaterial v-if="activeTabId === 'transfer-material'" />
         <SiteReturn v-if="activeTabId === 'site-return'" />
+        <StockDetailQuery v-if="activeTabId === 'inventory-search'" />
+        <InventoryCheckRecord v-if="activeTabId === 'inventory-check'" />
+        <StockMaterialManagement v-if="activeTabId === 'stock-material'" />
       </main>
     </div>
 
