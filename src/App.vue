@@ -7,6 +7,7 @@ import SiteConsumption from './components/SiteConsumption.vue'
 import TransferMaterial from './components/TransferMaterial.vue'
 import SiteReturn from './components/SiteReturn.vue'
 import InventoryCheckRecord from './components/InventoryCheckRecord.vue'
+import InventoryCheckReport from './components/InventoryCheckReport.vue'
 import StockMaterialManagement from './components/StockMaterialManagement.vue'
 import StockDetailQuery from './components/StockDetailQuery.vue'
 import UserManagement from './components/UserManagement.vue'
@@ -40,6 +41,7 @@ const menuGroups = reactive([
     items: [
       { id: 'inventory-search', label: '库存明细查询', icon: '◦', active: false },
       { id: 'inventory-check', label: '库存盘点记录', icon: '◦', active: false },
+      { id: 'inventory-check-report', label: '库存盘点通报', icon: '◦', active: false },
       { id: 'stock-material', label: '存量物资管理', icon: '◦', active: false },
     ],
   },
@@ -1337,6 +1339,7 @@ function sortIndicator(key) {
         <SiteReturn v-if="activeTabId === 'site-return'" />
         <StockDetailQuery v-if="activeTabId === 'inventory-search'" />
         <InventoryCheckRecord v-if="activeTabId === 'inventory-check'" />
+        <InventoryCheckReport v-if="activeTabId === 'inventory-check-report'" />
         <StockMaterialManagement v-if="activeTabId === 'stock-material'" />
         <UserManagement v-if="activeTabId === 'user-management'" />
       </main>
