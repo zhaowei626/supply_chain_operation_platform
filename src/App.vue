@@ -9,6 +9,7 @@ import SiteReturn from './components/SiteReturn.vue'
 import InventoryCheckRecord from './components/InventoryCheckRecord.vue'
 import StockMaterialManagement from './components/StockMaterialManagement.vue'
 import StockDetailQuery from './components/StockDetailQuery.vue'
+import UserManagement from './components/UserManagement.vue'
 
 const menuGroups = reactive([
   {
@@ -47,6 +48,12 @@ const menuGroups = reactive([
     icon: '◎',
     expanded: true,
     items: [{ id: 'resource-view', label: '资源全景可视', icon: '◦', active: false }],
+  },
+  {
+    title: '系统管理',
+    icon: '⚙',
+    expanded: true,
+    items: [{ id: 'user-management', label: '用户管理', icon: '◦', active: false }],
   },
 ])
 
@@ -1331,6 +1338,7 @@ function sortIndicator(key) {
         <StockDetailQuery v-if="activeTabId === 'inventory-search'" />
         <InventoryCheckRecord v-if="activeTabId === 'inventory-check'" />
         <StockMaterialManagement v-if="activeTabId === 'stock-material'" />
+        <UserManagement v-if="activeTabId === 'user-management'" />
       </main>
     </div>
 
