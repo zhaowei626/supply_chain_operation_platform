@@ -6,7 +6,7 @@ const activeTab = ref('returnOrder')
 const createEmptyReturnOrderForm = () => ({
   returnNo: '',
   stationName: '',
-  stationCode: '',
+  approvalStatus: '',
   submitDateStart: '',
   submitDateEnd: '',
   returnReason: '',
@@ -17,7 +17,7 @@ const createEmptyReturnOrderForm = () => ({
 const createEmptyMaterialForm = () => ({
   returnNo: '',
   stationName: '',
-  stationCode: '',
+  approvalStatus: '',
   submitDateStart: '',
   submitDateEnd: '',
   consumptionNo: '',
@@ -45,6 +45,7 @@ const returnOrderColumns = ref([
   { key: 'thirdLevelDept', label: '三级部门', width: '120px', sortable: true, visible: true },
   { key: 'stationName', label: '材料站名称', width: '160px', sortable: true, visible: true },
   { key: 'stationCode', label: '材料站编码', width: '120px', sortable: true, visible: true },
+  { key: 'approvalStatus', label: '审批状态', width: '100px', sortable: true, visible: true },
   { key: 'returnReason', label: '退料原因', width: '120px', sortable: true, visible: true },
   { key: 'returnDesc', label: '退料说明', width: '180px', sortable: true, visible: true },
   { key: 'materialCategory', label: '物料品类', width: '120px', sortable: true, visible: true },
@@ -78,6 +79,7 @@ const materialColumns = ref([
   { key: 'operatorPhone', label: '操作人联系方式', width: '130px', sortable: true, visible: true },
   { key: 'stationName', label: '材料站名称', width: '160px', sortable: true, visible: true },
   { key: 'stationCode', label: '材料站编码', width: '120px', sortable: true, visible: true },
+  { key: 'approvalStatus', label: '审批状态', width: '100px', sortable: true, visible: true },
   { key: 'firstLevelUnit', label: '一级单位', width: '140px', sortable: true, visible: true },
   { key: 'secondLevelUnit', label: '二级单位/部门', width: '150px', sortable: true, visible: true },
   { key: 'thirdLevelDept', label: '三级部门', width: '120px', sortable: true, visible: true },
@@ -89,29 +91,36 @@ const materialColumns = ref([
 const generateReturnOrderData = () => {
   const operators = ['张伟', '王芳', '李娜', '刘强', '陈静', '杨洋', '赵敏', '黄勇', '周涛', '吴倩']
   const approvers = ['王建国', '李德华', '赵晓明', '孙志远', '周美玲']
-  return Array.from({ length: 25 }, (_, i) => ({
-    id: i + 1,
-    returnNo: 'XCTL20261101' + String(i + 1).padStart(3, '0'),
-    consumptionNo: 'XCHY20261101' + String(i + 1).padStart(3, '0'),
-    firstLevelUnit: '国网辽宁省电力有限公司',
-    secondLevelUnit: '国网沈阳供电公司',
-    thirdLevelDept: '建设部',
-    stationName: '国网沈阳供电公司铁西物资供应中心',
-    stationCode: 'ST-SY-001',
-    returnReason: '设计变更',
-    returnDesc: '工程设计变更，部分材料不再需要',
-    materialCategory: '线缆类',
-    operator: operators[i % operators.length],
-    operatorPhone: '13' + Math.floor(Math.random() * 10) + '00' + Math.floor(Math.random() * 10) + '38' + String(Math.floor(Math.random() * 1000)).padStart(3, '0'),
-    submitTime: '2026-11-01 09:30',
-    approver: approvers[i % approvers.length],
-    approverPhone: '15' + Math.floor(Math.random() * 10) + '99' + Math.floor(Math.random() * 10) + '88' + String(Math.floor(Math.random() * 1000)).padStart(3, '0'),
-    approvalTime: '2026-11-01 10:15',
-  }))
+  const statuses = ['待审批', '已通过']
+  return Array.from({ length: 25 }, (_, i) => {
+    const status = statuses[i % statuses.length]
+    const isPending = status === '待审批'
+    return {
+      id: i + 1,
+      returnNo: 'XCTL20261101' + String(i + 1).padStart(3, '0'),
+      consumptionNo: 'XCHY20261101' + String(i + 1).padStart(3, '0'),
+      firstLevelUnit: '国网辽宁省电力有限公司',
+      secondLevelUnit: '国网沈阳供电公司',
+      thirdLevelDept: '建设部',
+      stationName: '国网沈阳供电公司铁西物资供应中心',
+      stationCode: 'ST-SY-001',
+      approvalStatus: status,
+      returnReason: '设计变更',
+      returnDesc: '工程设计变更，部分材料不再需要',
+      materialCategory: '线缆类',
+      operator: operators[i % operators.length],
+      operatorPhone: '13' + Math.floor(Math.random() * 10) + '00' + Math.floor(Math.random() * 10) + '38' + String(Math.floor(Math.random() * 1000)).padStart(3, '0'),
+      submitTime: '2026-11-01 09:30',
+      approver: isPending ? '' : approvers[i % approvers.length],
+      approverPhone: isPending ? '' : '15' + Math.floor(Math.random() * 10) + '99' + Math.floor(Math.random() * 10) + '88' + String(Math.floor(Math.random() * 1000)).padStart(3, '0'),
+      approvalTime: isPending ? '' : '2026-11-01 10:15',
+    }
+  })
 }
 
 const generateMaterialData = () => {
   const operators = ['张伟', '王芳', '李娜', '刘强', '陈静', '杨洋', '赵敏', '黄勇', '周涛', '吴倩']
+  const statuses = ['待审批', '已通过']
   return Array.from({ length: 25 }, (_, i) => ({
     id: i + 1,
     returnNo: 'XCTL20261101' + String(i + 1).padStart(3, '0'),
@@ -133,6 +142,7 @@ const generateMaterialData = () => {
     operatorPhone: '13' + Math.floor(Math.random() * 10) + '00' + Math.floor(Math.random() * 10) + '38' + String(Math.floor(Math.random() * 1000)).padStart(3, '0'),
     stationName: '国网沈阳供电公司铁西物资供应中心',
     stationCode: 'ST-SY-001',
+    approvalStatus: statuses[i % statuses.length],
     firstLevelUnit: '国网辽宁省电力有限公司',
     secondLevelUnit: '国网沈阳供电公司',
     thirdLevelDept: '建设部',
@@ -160,7 +170,7 @@ const filteredRows = computed(() => {
   if (activeTab.value === 'returnOrder') {
     const f = activeReturnOrderFilters.value
     if (f.stationName) rows = rows.filter(r => r.stationName.includes(f.stationName))
-    if (f.stationCode) rows = rows.filter(r => r.stationCode.includes(f.stationCode))
+    if (f.approvalStatus) rows = rows.filter(r => r.approvalStatus === f.approvalStatus)
     if (f.returnReason) rows = rows.filter(r => r.returnReason.includes(f.returnReason))
     if (f.firstLevelUnit) rows = rows.filter(r => r.firstLevelUnit.includes(f.firstLevelUnit))
     if (f.secondLevelUnit) rows = rows.filter(r => r.secondLevelUnit.includes(f.secondLevelUnit))
@@ -172,7 +182,7 @@ const filteredRows = computed(() => {
     if (f.returnNo) rows = rows.filter(r => r.returnNo.includes(f.returnNo))
     if (f.consumptionNo) rows = rows.filter(r => r.consumptionNo.includes(f.consumptionNo))
     if (f.stationName) rows = rows.filter(r => r.stationName.includes(f.stationName))
-    if (f.stationCode) rows = rows.filter(r => r.stationCode.includes(f.stationCode))
+    if (f.approvalStatus) rows = rows.filter(r => r.approvalStatus === f.approvalStatus)
     if (f.firstLevelUnit) rows = rows.filter(r => r.firstLevelUnit.includes(f.firstLevelUnit))
     if (f.secondLevelUnit) rows = rows.filter(r => r.secondLevelUnit.includes(f.secondLevelUnit))
     if (f.submitDateStart) rows = rows.filter(r => r.submitTime.slice(0, 10) >= f.submitDateStart)
@@ -328,6 +338,12 @@ function handleViewMaterialDetails(row) {
   alert(`查看 ${row.returnNo} 物料明细`)
 }
 
+const statusTone = (value) => {
+  if (value === '已通过') return 'success'
+  if (value === '待审批') return 'warning'
+  return 'neutral'
+}
+
 onMounted(() => {
   startLoading()
 })
@@ -362,7 +378,7 @@ onMounted(() => {
             <line x1="12" y1="16" x2="12" y2="12"></line>
             <line x1="12" y1="8" x2="12.01" y2="8"></line>
           </svg>
-          本页面展示的数据均为已审批通过的数据
+          本页面展示的数据为待审批的数据及已审批通过的数据
         </div>
       </div>
 
@@ -377,8 +393,12 @@ onMounted(() => {
           <input v-model.trim="returnOrderForm.stationName" type="text" placeholder="请输入材料站名称" />
         </label>
         <label class="field">
-          <span>材料站编码</span>
-          <input v-model.trim="returnOrderForm.stationCode" type="text" placeholder="请输入材料站编码" />
+          <span>审批状态</span>
+          <select v-model="returnOrderForm.approvalStatus">
+            <option value="">请选择审批状态</option>
+            <option value="待审批">待审批</option>
+            <option value="已通过">已通过</option>
+          </select>
         </label>
         <label class="field">
           <span>提交日期</span>
@@ -434,8 +454,12 @@ onMounted(() => {
           <input v-model.trim="materialForm.stationName" type="text" placeholder="请输入材料站名称" />
         </label>
         <label class="field">
-          <span>材料站编码</span>
-          <input v-model.trim="materialForm.stationCode" type="text" placeholder="请输入材料站编码" />
+          <span>审批状态</span>
+          <select v-model="materialForm.approvalStatus">
+            <option value="">请选择审批状态</option>
+            <option value="待审批">待审批</option>
+            <option value="已通过">已通过</option>
+          </select>
         </label>
         <label class="field">
           <span>提交日期</span>
@@ -598,6 +622,11 @@ onMounted(() => {
                 </td>
                 <td v-else-if="column.key === 'actions'" class="actions cell--actions sticky-right" style="background-color: #fff; z-index: 1;">
                   <a href="javascript:void(0)" class="text-button" @click="handleViewMaterialDetails(row)" style="color: #1e3a8a; text-decoration: none;">物料明细</a>
+                </td>
+                <td v-else-if="column.key === 'approvalStatus'">
+                  <span :class="['chip', `chip--${statusTone(row[column.key])}`]">
+                    {{ row[column.key] }}
+                  </span>
                 </td>
                 <td v-else :title="row[column.key]">
                   {{ formatTextTruncate(row[column.key], 10) }}
